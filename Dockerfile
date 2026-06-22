@@ -9,7 +9,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 RUN rustup target add wasm32-unknown-unknown
-RUN wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf- -C /usr/local/bin
+RUN case "$(uname -m)" in \
+      x86_64) ARCH=x86_64 ;; \
+      aarch64) ARCH=aarch64 ;; \
+      *) echo "Unsupported architecture" && exit 1 ;; \
+    esac && \
+    wget -qO- "https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-${ARCH}-unknown-linux-gnu.tar.gz" | tar -xzf- -C /usr/local/bin
 
 COPY Cargo.toml ./
 COPY frontend/ ./frontend/
