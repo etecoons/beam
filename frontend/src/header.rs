@@ -43,6 +43,13 @@ pub fn header(props: &HeaderProps) -> Html {
         })
     };
 
+    let disabled = !is_authenticated || !pin_required;
+    let onclick_handler = if disabled {
+        Callback::from(|_| ())
+    } else {
+        on_logout
+    };
+
     let theme_toggle_icon = match theme.as_str() {
         "dark" => html! {
             <svg id="moon-icon" class="moon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
@@ -87,31 +94,19 @@ pub fn header(props: &HeaderProps) -> Html {
                 <button id="theme-toggle" class="icon-button" onclick={on_toggle} aria-label="Toggle theme">
                     {theme_toggle_icon}
                 </button>
-                {if pin_required {
-                    let disabled = !is_authenticated;
-                    let onclick_handler = if disabled {
-                        Callback::from(|_| ())
-                    } else {
-                        on_logout
-                    };
-                    html! {
-                        <button
-                            id="logout-button"
-                            class="icon-button"
-                            onclick={onclick_handler}
-                            disabled={disabled}
-                            data-tooltip={if disabled { "".to_string() } else { logout_tooltip.clone() }}
-                        >
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                                <polyline points="16 17 21 12 16 7" />
-                                <line x1="21" y1="12" x2="9" y2="12" />
-                            </svg>
-                        </button>
-                    }
-                } else {
-                    html! {}
-                }}
+                <button
+                    id="logout-button"
+                    class="icon-button"
+                    onclick={onclick_handler}
+                    disabled={disabled}
+                    data-tooltip={if disabled { "".to_string() } else { logout_tooltip.clone() }}
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                </button>
             </div>
         </header>
     }
