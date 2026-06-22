@@ -15,16 +15,7 @@ pub async fn fetch_config() -> Result<FrontendConfig, String> {
     Ok(config)
 }
 
-pub async fn check_already_authenticated() -> bool {
-    let res = gloo_net::http::Request::get("/api/files")
-        .send()
-        .await;
-        
-    match res {
-        Ok(response) => response.status() == 200,
-        Err(_) => false,
-    }
-}
+
 
 pub async fn verify_pin_api(pin: &str) -> Result<bool, String> {
     let res = gloo_net::http::Request::post("/api/auth/verify-pin")

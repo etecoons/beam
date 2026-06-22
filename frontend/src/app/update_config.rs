@@ -3,7 +3,6 @@ use yew::prelude::Context;
 use crate::app::App;
 use crate::types::Msg;
 use crate::utils::{save_theme, set_theme_attribute};
-use crate::api::check_already_authenticated;
 
 impl App {
     pub fn update_config(&mut self, ctx: &Context<Self>, msg: Msg) -> bool {
@@ -25,15 +24,8 @@ impl App {
                             self.is_authenticated = true;
                             ctx.link().send_message(Msg::RefreshFiles);
                         } else {
-                            // Verify if already authenticated via session/cookie
-                            let link = ctx.link().clone();
-                            wasm_bindgen_futures::spawn_local(async move {
-                                if check_already_authenticated().await {
-                                    link.send_message(Msg::PinVerificationResult(Ok(true)));
-                                } else {
-                                    link.send_message(Msg::PinVerificationResult(Err("".to_string())));
-                                }
-                            });
+                            self.is_authenticated = false;
+                            self.reset_pin_inputs();
                         }
                     }
                     Err(e) => {
