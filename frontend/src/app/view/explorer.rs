@@ -3,7 +3,6 @@ use yew::html::Scope;
 
 use crate::app::App;
 use crate::types::{Msg, FileItem};
-use crate::utils::format_date;
 use crate::api::download_file;
 
 impl App {
@@ -53,12 +52,9 @@ fn render_file_items(items: &[FileItem], _level: usize, link: Scope<App>) -> Htm
         <>
             {for items.iter().map(|item| {
                 match item {
-                    FileItem::File { name, path, size: _, formatted_size, upload_date, extension: _ } => {
+                    FileItem::File { name, path, size: _, formatted_size, upload_date: _, extension: _ } => {
                         let path_c = path.clone();
-                        let name_c = name.clone();
-                        let path_d = path.clone();
                         let path_s = path.clone();
-                        let link_c = link.clone();
                         let link_d = link.clone();
                         let link_s = link.clone();
                         
@@ -68,7 +64,6 @@ fn render_file_items(items: &[FileItem], _level: usize, link: Scope<App>) -> Htm
                                     {"📄 "}{name}
                                 </div>
                                 <div class="uploaded-file-size">{formatted_size}</div>
-                                <div class="uploaded-file-date">{format_date(upload_date)}</div>
                                 <div class="uploaded-file-actions">
                                     <button class="action-btn download-btn" onclick={
                                         let p = path_c.clone();
@@ -97,17 +92,6 @@ fn render_file_items(items: &[FileItem], _level: usize, link: Scope<App>) -> Htm
                                         })
                                     }>
                                         {"Copy Link"}
-                                    </button>
-                                    <button class="action-btn rename-btn" onclick={
-                                        let p = path_d.clone();
-                                        let n = name_c.clone();
-                                        let l = link_c.clone();
-                                        Callback::from(move |e: MouseEvent| {
-                                            e.stop_propagation();
-                                            l.send_message(Msg::StartRename(p.clone(), n.clone()));
-                                        })
-                                    }>
-                                        {"Rename"}
                                     </button>
                                     <button class="action-btn delete-btn" onclick={
                                         let p = path_c.clone();

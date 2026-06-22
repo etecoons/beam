@@ -38,6 +38,7 @@ pub fn format_file_size(bytes: u64) -> String {
     format!("{:.2} {}", val, sizes[i])
 }
 
+#[allow(dead_code)]
 pub fn format_date(date_str: &str) -> String {
     if date_str.len() >= 10 {
         date_str[0..10].to_string()

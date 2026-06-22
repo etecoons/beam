@@ -55,7 +55,7 @@ impl App {
                             <main>
                                 {self.render_uploader(ctx)}
                                 
-                                <div class="editor-container" style="margin-top: 1.5rem; padding: 1.5rem; overflow-y: auto;">
+                                <div style="margin-top: 1.5rem; padding: 0; overflow-y: auto;">
                                     {self.render_explorer(ctx)}
                                 </div>
                             </main>

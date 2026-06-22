@@ -450,7 +450,7 @@ button:disabled {
 }
 .explorer-grid-header {
     display: grid;
-    grid-template-columns: 1fr 100px 120px 320px;
+    grid-template-columns: 1fr 100px 240px;
     align-items: center;
     gap: 15px;
     padding: 10px;
@@ -463,7 +463,7 @@ button:disabled {
 }
 .uploaded-file-item {
     display: grid;
-    grid-template-columns: 1fr 100px 120px 320px;
+    grid-template-columns: 1fr 100px 240px;
     align-items: center;
     gap: 15px;
     padding: 10px;
