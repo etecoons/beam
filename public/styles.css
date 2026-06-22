@@ -491,6 +491,13 @@ button:disabled {
 .download-btn:hover {
     background: var(--success-hover, #27ae60);
 }
+.share-btn {
+    background: var(--primary-color, #2196f3);
+    color: white;
+}
+.share-btn:hover {
+    background: var(--highlight-hover, #1976d2);
+}
 .rename-btn {
     background: var(--warning-color, #f39c12);
     color: white;

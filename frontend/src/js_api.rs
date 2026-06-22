@@ -87,3 +87,30 @@ extern "C" {
     #[wasm_bindgen(js_name = getFilesFromDataTransfer, catch)]
     pub async fn get_files_from_data_transfer(data_transfer: &web_sys::DataTransfer) -> Result<js_sys::Array, JsValue>;
 }
+
+#[wasm_bindgen(inline_js = r#"
+export function copyTextToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+    }
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return successful;
+    } catch (err) {
+        document.body.removeChild(textArea);
+        return false;
+    }
+}
+"#)]
+extern "C" {
+    #[wasm_bindgen(js_name = copyTextToClipboard)]
+    pub fn copy_text_to_clipboard(text: &str) -> bool;
+}

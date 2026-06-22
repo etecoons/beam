@@ -64,8 +64,10 @@ fn render_file_items(items: &[FileItem], level: usize, link: Scope<App>) -> Html
                         let path_c = path.clone();
                         let name_c = name.clone();
                         let path_d = path.clone();
+                        let path_s = path.clone();
                         let link_c = link.clone();
                         let link_d = link.clone();
+                        let link_s = link.clone();
                         
                         html! {
                             <div class="uploaded-file-item" style={format!("margin-left: {}px", level * 20)}>
@@ -84,6 +86,25 @@ fn render_file_items(items: &[FileItem], level: usize, link: Scope<App>) -> Html
                                         })
                                     }>
                                         {"Download"}
+                                    </button>
+                                    <button class="action-btn share-btn" onclick={
+                                        let p = path_s.clone();
+                                        let l = link_s.clone();
+                                        Callback::from(move |e: MouseEvent| {
+                                            e.stop_propagation();
+                                            let window = web_sys::window().unwrap();
+                                            let origin = window.location().origin().unwrap_or_default();
+                                            let encoded_path = crate::utils::encode_path(&p);
+                                            let full_url = format!("{}/api/files/download/{}", origin, encoded_path);
+                                            
+                                            if crate::js_api::copy_text_to_clipboard(&full_url) {
+                                                l.send_message(Msg::AddToast("Download link copied!".to_string(), "success".to_string()));
+                                            } else {
+                                                l.send_message(Msg::AddToast("Failed to copy link".to_string(), "error".to_string()));
+                                            }
+                                        })
+                                    }>
+                                        {"Copy Link"}
                                     </button>
                                     <button class="action-btn rename-btn" onclick={
                                         let p = path_d.clone();
