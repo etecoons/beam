@@ -1,5 +1,11 @@
 # RustDrop
 
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/UberMetroid/RustDrop?label=version" alt="GitHub release" />
+  <img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg" alt="License" />
+  <img src="https://img.shields.io/github/actions/workflow/status/UberMetroid/RustDrop/docker-publish.yml" alt="GitHub Actions Workflow Status" />
+</p>
+
 A stupid simple file upload application that provides a clean, modern interface for dragging and dropping files. Built with Rust (Axum/Actix/Tokio backend and Yew/Trunk frontend).
 
 ![RustDrop](https://github.com/user-attachments/assets/1b909d26-9ead-4dc7-85bc-8bfda0d366c1)

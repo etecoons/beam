@@ -3,65 +3,103 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - main # Trigger the workflow on pushes to the main branch
-      - dev # Trigger the workflow on pushes to the dev branch
+      - main
+      - dev
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  PLATFORMS: linux/amd64,linux/arm64
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
-      # Step 1: Check out the repository
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # Step 2: Log in to Docker Hub
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: 'arm64,amd64'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
+
+      # Log in to GitHub Container Registry (GHCR)
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Optionally log in to Docker Hub if credentials are provided
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+        if: ${{ secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Step 3: Setup QEMU to enable multiarch builds
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      - name: Extract version from backend/Cargo.toml
+        id: package_version
+        run: |
+          VERSION=$(grep -m 1 '^version = ' backend/Cargo.toml | cut -d '"' -f 2)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
 
-      # Step 4: Set up docker buildx
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # Step 5: Extract metadata and set versions
-      - name: Extract metadata (tags, labels) for Docker
+      - name: Generate Docker Metadata
         id: meta
-        uses: docker/metadata-action@v5
-        with:
-          # image name is rustdrop, in the docker user's repo
-          # this allows the push to work in forks
-          images: |
-            name=ubermetroid/rustdrop
-          tags: |
-            # Add :dev tag for pushes to the dev branch
-            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
-            # the semantic versioning tags add "latest" when a version tag is present
-            # but since version tags aren't being used (yet?) let's add "latest" anyway
-            type=raw,value=latest
-            # output x.y.z, based on a tag vx.y.z (e.g. 1.1.2 for a tag v1.1.2)
-            type=semver,pattern={{version}}
-            # output x.y, based on a tag vx.y.z
-            type=semver,pattern={{major}}.{{minor}}
-            # output x, based on a tag vx.y.z, disabled if x is zero
-            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
-            # full length sha
-            type=sha,format=long
+        run: |
+          LOWER_IMAGE_NAME_GHCR=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          LOWER_IMAGE_NAME_DOCKER=$(echo "ubermetroid/rustdrop" | tr '[:upper:]' '[:lower:]')
+          VERSION=${{ steps.package_version.outputs.VERSION }}
+          
+          # Initialize tags list
+          TAGS=""
+          
+          # Add GHCR tags
+          TAGS="${TAGS}${LOWER_IMAGE_NAME_GHCR}:${VERSION}"
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            TAGS="${TAGS},${LOWER_IMAGE_NAME_GHCR}:latest"
+          elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+            TAGS="${TAGS},${LOWER_IMAGE_NAME_GHCR}:dev"
+          fi
+          
+          # Add Docker Hub tags (if credentials exist)
+          if [ "${{ secrets.DOCKER_USERNAME }}" != "" ]; then
+            TAGS="${TAGS},${LOWER_IMAGE_NAME_DOCKER}:${VERSION}"
+            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              TAGS="${TAGS},${LOWER_IMAGE_NAME_DOCKER}:latest"
+            elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+              TAGS="${TAGS},${LOWER_IMAGE_NAME_DOCKER}:dev"
+            fi
+          fi
+          
+          echo "TAGS=${TAGS}" >> $GITHUB_OUTPUT
+          echo "Generated tags: ${TAGS}"
 
-      # Step 6: build and push the image for multiple archs
-      - name: Build and push Docker image
-        id: push
+      - name: Build and Push Multi-Platform Image
         uses: docker/build-push-action@v6
         with:
           context: .
+          platforms: ${{ env.PLATFORMS }}
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          # build and push for amd64 and arm64 platforms
-          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.TAGS }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
