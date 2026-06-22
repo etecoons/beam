@@ -22,11 +22,11 @@ let testFilePath;
 before(async () => {
   // Initialize app
   await initialize();
-  
+
   // Create a test file
   testFilePath = path.join(config.uploadDir, 'test-file.txt');
   await fs.writeFile(testFilePath, 'Test content');
-  
+
   // Start server on random port
   server = http.createServer(app);
   await new Promise((resolve) => {
@@ -43,7 +43,7 @@ after(async () => {
   if (server) {
     await new Promise((resolve) => server.close(resolve));
   }
-  
+
   // Clean up test files
   try {
     const testFiles = await fs.readdir(config.uploadDir);
@@ -80,13 +80,13 @@ async function makeRequest(options, body = null) {
         }
       });
     });
-    
+
     req.on('error', reject);
-    
+
     if (body) {
       req.write(JSON.stringify(body));
     }
-    
+
     req.end();
   });
 }
@@ -100,13 +100,13 @@ describe('File Management API Tests', () => {
         path: '/api/files',
         method: 'GET',
       });
-      
+
       assert.strictEqual(response.status, 200);
       assert.ok(Array.isArray(response.data.items));
       assert.ok(response.data.totalFiles >= 0);
     });
   });
-  
+
   describe('GET /api/files/info/*', () => {
     it('should return file info for existing file', async () => {
       const response = await makeRequest({
@@ -115,12 +115,12 @@ describe('File Management API Tests', () => {
         path: '/api/files/info/test-file.txt',
         method: 'GET',
       });
-      
+
       assert.strictEqual(response.status, 200);
       assert.strictEqual(response.data.filename, 'test-file.txt');
       assert.ok(response.data.size >= 0);
     });
-    
+
     it('should return 404 for non-existent file', async () => {
       const response = await makeRequest({
         host: 'localhost',
@@ -128,10 +128,10 @@ describe('File Management API Tests', () => {
         path: '/api/files/info/nonexistent.txt',
         method: 'GET',
       });
-      
+
       assert.strictEqual(response.status, 404);
     });
-    
+
     it('should prevent path traversal attacks', async () => {
       const response = await makeRequest({
         host: 'localhost',
@@ -139,11 +139,11 @@ describe('File Management API Tests', () => {
         path: '/api/files/info/../../../etc/passwd',
         method: 'GET',
       });
-      
+
       assert.strictEqual(response.status, 403);
     });
   });
-  
+
   describe('GET /api/files/download/*', () => {
     it('should download existing file', async () => {
       const response = await makeRequest({
@@ -152,11 +152,11 @@ describe('File Management API Tests', () => {
         path: '/api/files/download/test-file.txt',
         method: 'GET',
       });
-      
+
       assert.strictEqual(response.status, 200);
       assert.ok(response.headers['content-disposition']);
     });
-    
+
     it('should return 404 for non-existent file', async () => {
       const response = await makeRequest({
         host: 'localhost',
@@ -164,10 +164,10 @@ describe('File Management API Tests', () => {
         path: '/api/files/download/nonexistent.txt',
         method: 'GET',
       });
-      
+
       assert.strictEqual(response.status, 404);
     });
-    
+
     it('should prevent path traversal in download', async () => {
       const response = await makeRequest({
         host: 'localhost',
@@ -175,26 +175,26 @@ describe('File Management API Tests', () => {
         path: '/api/files/download/../../../etc/passwd',
         method: 'GET',
       });
-      
+
       assert.strictEqual(response.status, 403);
     });
   });
-  
+
   describe('DELETE /api/files/*', () => {
     it('should delete existing file', async () => {
       // Create a file to delete
       const deleteTestPath = path.join(config.uploadDir, 'delete-test.txt');
       await fs.writeFile(deleteTestPath, 'To be deleted');
-      
+
       const response = await makeRequest({
         host: 'localhost',
         port: server.address().port,
         path: '/api/files/delete-test.txt',
         method: 'DELETE',
       });
-      
+
       assert.strictEqual(response.status, 200);
-      
+
       // Verify file is deleted
       try {
         await fs.access(deleteTestPath);
@@ -203,7 +203,7 @@ describe('File Management API Tests', () => {
         assert.strictEqual(err.code, 'ENOENT');
       }
     });
-    
+
     it('should return 404 for non-existent file', async () => {
       const response = await makeRequest({
         host: 'localhost',
@@ -211,10 +211,10 @@ describe('File Management API Tests', () => {
         path: '/api/files/nonexistent.txt',
         method: 'DELETE',
       });
-      
+
       assert.strictEqual(response.status, 404);
     });
-    
+
     it('should prevent path traversal in deletion', async () => {
       const response = await makeRequest({
         host: 'localhost',
@@ -222,70 +222,78 @@ describe('File Management API Tests', () => {
         path: '/api/files/../../../etc/passwd',
         method: 'DELETE',
       });
-      
+
       assert.strictEqual(response.status, 403);
     });
   });
-  
+
   describe('PUT /api/files/rename/*', () => {
     it('should rename existing file', async () => {
       // Create a file to rename
       const renameTestPath = path.join(config.uploadDir, 'rename-test.txt');
       await fs.writeFile(renameTestPath, 'To be renamed');
-      
-      const response = await makeRequest({
-        host: 'localhost',
-        port: server.address().port,
-        path: '/api/files/rename/rename-test.txt',
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+
+      const response = await makeRequest(
+        {
+          host: 'localhost',
+          port: server.address().port,
+          path: '/api/files/rename/rename-test.txt',
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      }, {
-        newName: 'renamed-file.txt',
-      });
-      
+        {
+          newName: 'renamed-file.txt',
+        }
+      );
+
       assert.strictEqual(response.status, 200);
-      
+
       // Verify new file exists
       const newPath = path.join(config.uploadDir, 'renamed-file.txt');
       await fs.access(newPath);
-      
+
       // Clean up
       await fs.unlink(newPath);
     });
-    
+
     it('should reject empty new name', async () => {
-      const response = await makeRequest({
-        host: 'localhost',
-        port: server.address().port,
-        path: '/api/files/rename/test-file.txt',
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await makeRequest(
+        {
+          host: 'localhost',
+          port: server.address().port,
+          path: '/api/files/rename/test-file.txt',
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      }, {
-        newName: '',
-      });
-      
+        {
+          newName: '',
+        }
+      );
+
       assert.strictEqual(response.status, 400);
     });
-    
+
     it('should prevent path traversal in rename', async () => {
-      const response = await makeRequest({
-        host: 'localhost',
-        port: server.address().port,
-        path: '/api/files/rename/../../../etc/passwd',
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await makeRequest(
+        {
+          host: 'localhost',
+          port: server.address().port,
+          path: '/api/files/rename/../../../etc/passwd',
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      }, {
-        newName: 'hacked.txt',
-      });
-      
+        {
+          newName: 'hacked.txt',
+        }
+      );
+
       assert.strictEqual(response.status, 403);
     });
   });
 });
-

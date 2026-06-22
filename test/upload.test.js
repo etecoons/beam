@@ -22,7 +22,7 @@ let baseUrl;
 before(async () => {
   // Initialize app
   await initialize();
-  
+
   // Start server on random port
   server = http.createServer(app);
   await new Promise((resolve) => {
@@ -39,7 +39,7 @@ after(async () => {
   if (server) {
     await new Promise((resolve) => server.close(resolve));
   }
-  
+
   // Clean up test uploads
   try {
     const testFiles = await fs.readdir(config.uploadDir);
@@ -76,9 +76,9 @@ async function makeRequest(options, body = null) {
         }
       });
     });
-    
+
     req.on('error', reject);
-    
+
     if (body) {
       if (Buffer.isBuffer(body)) {
         req.write(body);
@@ -86,7 +86,7 @@ async function makeRequest(options, body = null) {
         req.write(JSON.stringify(body));
       }
     }
-    
+
     req.end();
   });
 }
@@ -94,144 +94,168 @@ async function makeRequest(options, body = null) {
 describe('Upload API Tests', () => {
   describe('POST /api/upload/init', () => {
     it('should initialize a new upload', async () => {
-      const response = await makeRequest({
-        host: 'localhost',
-        port: server.address().port,
-        path: '/api/upload/init',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await makeRequest(
+        {
+          host: 'localhost',
+          port: server.address().port,
+          path: '/api/upload/init',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      }, {
-        filename: 'test.txt',
-        fileSize: 100,
-      });
-      
+        {
+          filename: 'test.txt',
+          fileSize: 100,
+        }
+      );
+
       assert.strictEqual(response.status, 200);
       assert.ok(response.data.uploadId);
     });
-    
+
     it('should reject uploads without filename', async () => {
-      const response = await makeRequest({
-        host: 'localhost',
-        port: server.address().port,
-        path: '/api/upload/init',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await makeRequest(
+        {
+          host: 'localhost',
+          port: server.address().port,
+          path: '/api/upload/init',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      }, {
-        fileSize: 100,
-      });
-      
+        {
+          fileSize: 100,
+        }
+      );
+
       assert.strictEqual(response.status, 400);
       assert.ok(response.data.error);
     });
-    
+
     it('should reject uploads without fileSize', async () => {
-      const response = await makeRequest({
-        host: 'localhost',
-        port: server.address().port,
-        path: '/api/upload/init',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await makeRequest(
+        {
+          host: 'localhost',
+          port: server.address().port,
+          path: '/api/upload/init',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      }, {
-        filename: 'test.txt',
-      });
-      
+        {
+          filename: 'test.txt',
+        }
+      );
+
       assert.strictEqual(response.status, 400);
       assert.ok(response.data.error);
     });
-    
+
     it('should handle zero-byte files', async () => {
-      const response = await makeRequest({
-        host: 'localhost',
-        port: server.address().port,
-        path: '/api/upload/init',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await makeRequest(
+        {
+          host: 'localhost',
+          port: server.address().port,
+          path: '/api/upload/init',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      }, {
-        filename: 'empty.txt',
-        fileSize: 0,
-      });
-      
+        {
+          filename: 'empty.txt',
+          fileSize: 0,
+        }
+      );
+
       assert.strictEqual(response.status, 200);
       assert.ok(response.data.uploadId);
     });
   });
-  
+
   describe('POST /api/upload/chunk/:uploadId', () => {
     it('should accept chunks for a valid upload', async () => {
       // Initialize upload first
-      const initResponse = await makeRequest({
-        host: 'localhost',
-        port: server.address().port,
-        path: '/api/upload/init',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const initResponse = await makeRequest(
+        {
+          host: 'localhost',
+          port: server.address().port,
+          path: '/api/upload/init',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      }, {
-        filename: 'chunk-test.txt',
-        fileSize: 50,
-      });
-      
+        {
+          filename: 'chunk-test.txt',
+          fileSize: 50,
+        }
+      );
+
       const { uploadId } = initResponse.data;
-      
+
       // Send chunk
       const chunk = Buffer.from('Hello, World!');
-      const chunkResponse = await makeRequest({
-        host: 'localhost',
-        port: server.address().port,
-        path: `/api/upload/chunk/${uploadId}`,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/octet-stream',
+      const chunkResponse = await makeRequest(
+        {
+          host: 'localhost',
+          port: server.address().port,
+          path: `/api/upload/chunk/${uploadId}`,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/octet-stream',
+          },
         },
-      }, chunk);
-      
+        chunk
+      );
+
       assert.strictEqual(chunkResponse.status, 200);
       assert.ok(chunkResponse.data.bytesReceived > 0);
     });
-    
+
     it('should reject chunks for invalid uploadId', async () => {
       const chunk = Buffer.from('Test data');
-      const response = await makeRequest({
-        host: 'localhost',
-        port: server.address().port,
-        path: '/api/upload/chunk/invalid-id',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/octet-stream',
+      const response = await makeRequest(
+        {
+          host: 'localhost',
+          port: server.address().port,
+          path: '/api/upload/chunk/invalid-id',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/octet-stream',
+          },
         },
-      }, chunk);
-      
+        chunk
+      );
+
       assert.strictEqual(response.status, 404);
     });
   });
-  
+
   describe('POST /api/upload/cancel/:uploadId', () => {
     it('should cancel an active upload', async () => {
       // Initialize upload
-      const initResponse = await makeRequest({
-        host: 'localhost',
-        port: server.address().port,
-        path: '/api/upload/init',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const initResponse = await makeRequest(
+        {
+          host: 'localhost',
+          port: server.address().port,
+          path: '/api/upload/init',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      }, {
-        filename: 'cancel-test.txt',
-        fileSize: 100,
-      });
-      
+        {
+          filename: 'cancel-test.txt',
+          fileSize: 100,
+        }
+      );
+
       const { uploadId } = initResponse.data;
-      
+
       // Cancel upload
       const cancelResponse = await makeRequest({
         host: 'localhost',
@@ -242,50 +266,55 @@ describe('Upload API Tests', () => {
           'Content-Type': 'application/json',
         },
       });
-      
+
       assert.strictEqual(cancelResponse.status, 200);
     });
   });
-  
+
   describe('Batch uploads', () => {
     it('should handle multiple files with same batch ID', async () => {
-      const batchId = `batch-${crypto.randomBytes(4).toString('hex')}`;
-      
+      const batchId = `${Date.now()}-${crypto.randomBytes(5).toString('hex').substring(0, 9)}`;
+
       // Initialize first file
-      const file1Response = await makeRequest({
-        host: 'localhost',
-        port: server.address().port,
-        path: '/api/upload/init',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Batch-Id': batchId,
+      const file1Response = await makeRequest(
+        {
+          host: 'localhost',
+          port: server.address().port,
+          path: '/api/upload/init',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Batch-Id': batchId,
+          },
         },
-      }, {
-        filename: 'batch-file1.txt',
-        fileSize: 50,
-      });
-      
+        {
+          filename: 'batch-file1.txt',
+          fileSize: 50,
+        }
+      );
+
       assert.strictEqual(file1Response.status, 200);
-      
+
       // Initialize second file
-      const file2Response = await makeRequest({
-        host: 'localhost',
-        port: server.address().port,
-        path: '/api/upload/init',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Batch-Id': batchId,
+      const file2Response = await makeRequest(
+        {
+          host: 'localhost',
+          port: server.address().port,
+          path: '/api/upload/init',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Batch-Id': batchId,
+          },
         },
-      }, {
-        filename: 'batch-file2.txt',
-        fileSize: 50,
-      });
-      
+        {
+          filename: 'batch-file2.txt',
+          fileSize: 50,
+        }
+      );
+
       assert.strictEqual(file2Response.status, 200);
       assert.notStrictEqual(file1Response.data.uploadId, file2Response.data.uploadId);
     });
   });
 });
-

@@ -136,6 +136,7 @@ By default, DumbDrop **does not** trust proxy headers like `X-Forwarded-For`. Th
 ### When to Enable TRUST_PROXY
 
 Only enable `TRUST_PROXY=true` if you are deploying DumbDrop behind a **trusted reverse proxy** such as:
+
 - Nginx
 - Apache
 - Caddy
@@ -161,6 +162,7 @@ TRUSTED_PROXY_IPS=172.17.0.1,10.0.0.1
 ```
 
 **Common proxy IPs:**
+
 - Docker default bridge: `172.17.0.1`
 - Docker Compose networks: Check with `docker network inspect <network_name>`
 - Nginx/Apache on same host: `127.0.0.1` or `::1`
@@ -169,6 +171,7 @@ TRUSTED_PROXY_IPS=172.17.0.1,10.0.0.1
 ### Security Warnings
 
 ⚠️ **DO NOT enable `TRUST_PROXY` if:**
+
 - DumbDrop is directly accessible from the internet
 - You are unsure whether you have a reverse proxy
 - You cannot verify the proxy IP addresses
@@ -178,18 +181,21 @@ TRUSTED_PROXY_IPS=172.17.0.1,10.0.0.1
 ### Examples for Common Setups
 
 **Nginx Reverse Proxy:**
+
 ```env
 TRUST_PROXY=true
 TRUSTED_PROXY_IPS=172.17.0.1
 ```
 
 **Cloudflare:**
+
 ```env
 TRUST_PROXY=true
 # List Cloudflare IPs or use their published IP ranges
 ```
 
 **Direct Access (No Proxy):**
+
 ```env
 # TRUST_PROXY=false (default - no need to set)
 ```

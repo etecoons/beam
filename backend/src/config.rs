@@ -1,0 +1,136 @@
+use std::env;
+use std::path::PathBuf;
+
+#[derive(Clone, Debug)]
+pub struct AppConfig {
+    pub port: u16,
+    pub node_env: String,
+    pub base_url: String,
+    pub upload_dir: PathBuf,
+    pub max_file_size: u64,
+    pub auto_upload: bool,
+    pub show_file_list: bool,
+    pub pin: Option<String>,
+    pub trust_proxy: bool,
+    pub trusted_proxy_ips: Option<Vec<String>>,
+    pub site_title: String,
+    pub apprise_url: Option<String>,
+    pub apprise_message: String,
+    pub apprise_size_unit: Option<String>,
+    pub allowed_extensions: Option<Vec<String>>,
+    pub client_max_retries: u32,
+}
+
+impl AppConfig {
+    pub fn load() -> Self {
+        let _ = dotenvy::dotenv();
+
+        let port: u16 = env::var("PORT")
+            .ok()
+            .and_then(|p| p.parse().ok())
+            .unwrap_or(3000);
+
+        let node_env = env::var("NODE_ENV").unwrap_or_else(|_| "production".to_string());
+
+        let mut base_url = env::var("BASE_URL")
+            .unwrap_or_else(|_| format!("http://localhost:{}", port));
+        if !base_url.ends_with('/') {
+            base_url.push('/');
+        }
+
+        // Determine upload directory
+        let upload_dir = if let Ok(dir) = env::var("UPLOAD_DIR") {
+            if !dir.is_empty() {
+                PathBuf::from(dir)
+            } else {
+                env::var("LOCAL_UPLOAD_DIR")
+                    .map(PathBuf::from)
+                    .unwrap_or_else(|_| PathBuf::from("./local_uploads"))
+            }
+        } else {
+            env::var("LOCAL_UPLOAD_DIR")
+                .map(PathBuf::from)
+                .unwrap_or_else(|_| PathBuf::from("./local_uploads"))
+        };
+
+        let max_file_size = env::var("MAX_FILE_SIZE")
+            .ok()
+            .and_then(|s| s.parse::<u64>().ok())
+            .unwrap_or(1024) * 1024 * 1024; // MB to bytes
+
+        let auto_upload = env::var("AUTO_UPLOAD")
+            .map(|val| val == "true")
+            .unwrap_or(false);
+
+        let show_file_list = env::var("SHOW_FILE_LIST")
+            .map(|val| val == "true")
+            .unwrap_or(false);
+
+        // Accept RUSTDROP_PIN or DUMBDROP_PIN or PIN
+        let pin = env::var("RUSTDROP_PIN")
+            .or_else(|_| env::var("DUMBDROP_PIN"))
+            .or_else(|_| env::var("PIN"))
+            .ok()
+            .filter(|p| !p.is_empty() && p.chars().all(|c| c.is_ascii_digit()) && p.len() >= 4 && p.len() <= 10);
+
+        let trust_proxy = env::var("TRUST_PROXY")
+            .map(|val| val == "true")
+            .unwrap_or(false);
+
+        let trusted_proxy_ips = env::var("TRUSTED_PROXY_IPS")
+            .ok()
+            .map(|ips| ips.split(',').map(|ip| ip.trim().to_string()).collect());
+
+        // Accept RUSTDROP_TITLE or DUMBDROP_TITLE or SITE_TITLE
+        let site_title = env::var("RUSTDROP_TITLE")
+            .or_else(|_| env::var("DUMBDROP_TITLE"))
+            .or_else(|_| env::var("SITE_TITLE"))
+            .unwrap_or_else(|_| "RustDrop".to_string());
+
+        let apprise_url = env::var("APPRISE_URL").ok().filter(|s| !s.is_empty());
+
+        let apprise_message = env::var("APPRISE_MESSAGE")
+            .unwrap_or_else(|_| "New file uploaded - {filename} ({size}), Storage used {storage}".to_string());
+
+        let apprise_size_unit = env::var("APPRISE_SIZE_UNIT").ok().filter(|s| !s.is_empty());
+
+        let allowed_extensions = env::var("ALLOWED_EXTENSIONS")
+            .ok()
+            .filter(|s| !s.is_empty())
+            .map(|exts| {
+                exts.split(',')
+                    .map(|ext| {
+                        let mut trimmed = ext.trim().to_lowercase();
+                        if !trimmed.starts_with('.') {
+                            trimmed.insert(0, '.');
+                        }
+                        trimmed
+                    })
+                    .collect()
+            });
+
+        let client_max_retries = env::var("CLIENT_MAX_RETRIES")
+            .ok()
+            .and_then(|r| r.parse().ok())
+            .unwrap_or(5);
+
+        Self {
+            port,
+            node_env,
+            base_url,
+            upload_dir,
+            max_file_size,
+            auto_upload,
+            show_file_list,
+            pin,
+            trust_proxy,
+            trusted_proxy_ips,
+            site_title,
+            apprise_url,
+            apprise_message,
+            apprise_size_unit,
+            allowed_extensions,
+            client_max_retries,
+        }
+    }
+}
