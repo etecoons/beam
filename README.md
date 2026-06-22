@@ -8,8 +8,6 @@
 
 A stupid simple file upload application that provides a clean, modern interface for dragging and dropping files. Built with Rust (Axum/Tokio backend and Yew/Trunk WebAssembly frontend).
 
-![RustDrop](https://github.com/user-attachments/assets/1b909d26-9ead-4dc7-85bc-8bfda0d366c1)
-
 ---
 
 ## Features
