@@ -104,6 +104,42 @@ To build from source or run locally:
 
 ---
 
+## Project Structure
+
+```
+RustDrop/
+├── Cargo.toml          # Workspace configuration
+├── Dockerfile          # Multi-stage optimized Rust builder
+├── docker-compose.yml  # Docker Compose configuration
+├── LOCAL_DEVELOPMENT.md# Developer setup documentation
+├── local_uploads/      # Local directory for file uploads (Docker volumes mount here)
+├── public/             # Static web assets & styling
+│   ├── styles.css      # Core application stylesheet
+│   ├── service-worker.js# Service Worker for basic PWA caching
+│   └── assets/         # App icons (vector logo & favicon)
+├── backend/            # Axum HTTP backend server
+│   ├── Cargo.toml      # Backend dependency manifest
+│   └── src/            # Backend controller implementation
+│       ├── main.rs     # Application entrypoint & HTTP server bind
+│       ├── config.rs   # Configuration parsing & validation
+│       ├── security.rs # Timing-safe comparison & lockout validation
+│       ├── utils.rs    # Multipart file-saving helper utilities
+│       ├── routes/     # API routes (Auth, Upload, File management)
+│       └── services/   # Notification services (Apprise integration)
+└── frontend/           # Yew WebAssembly frontend
+    ├── Cargo.toml      # Frontend dependency manifest
+    ├── index.html      # Trunk template HTML entrypoint
+    └── src/            # Yew frontend implementation
+        ├── main.rs     # Yew app mount logic
+        ├── api.rs      # Client network service calls (fetch API)
+        ├── js_api.rs   # JavaScript interop (JS file drag-drop extraction)
+        ├── types.rs    # Core shared frontend data structures
+        ├── utils.rs    # Client utility helpers (formatting, etc.)
+        └── app/        # Yew state management, update cycle, & view components
+```
+
+---
+
 ## Contributing & License
 
 1. Fork the repo and create your feature branch.
