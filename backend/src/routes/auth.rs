@@ -184,11 +184,17 @@ async fn verify_pin(
     if safe_compare(pin_str, config_pin) {
         reset_attempts(&ip);
         
+        let is_secure = headers
+            .get("x-forwarded-proto")
+            .and_then(|v| v.to_str().ok())
+            .map(|v| v.eq_ignore_ascii_case("https"))
+            .unwrap_or_else(|| config.base_url.starts_with("https"));
+
         // Build secure cookie
         let secure_cookie = Cookie::build(("RUSTDROP_PIN", pin_str.to_string()))
             .http_only(true)
-            .secure(config.base_url.starts_with("https"))
-            .same_site(cookie::SameSite::Strict)
+            .secure(is_secure)
+            .same_site(cookie::SameSite::Lax)
             .path("/")
             .build();
             

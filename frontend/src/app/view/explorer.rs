@@ -32,16 +32,11 @@ impl App {
                             if data.items.is_empty() {
                                 html! { <div class="empty-message">{"No files uploaded yet"}</div> }
                             } else {
-                                html! {
-                                    <>
-                                        <div class="explorer-grid-header">
-                                            <div>{"Name"}</div>
-                                            <div>{"Size"}</div>
-                                            <div>{"Upload Date"}</div>
-                                            <div style="text-align: right; padding-right: 15px;">{"Actions"}</div>
-                                        </div>
-                                        {render_file_items(&data.items, 0, ctx.link().clone())}
-                                    </>
+                                let flat_items = flatten_files(&data.items);
+                                if flat_items.is_empty() {
+                                    html! { <div class="empty-message">{"No files uploaded yet"}</div> }
+                                } else {
+                                    render_file_items(&flat_items, 0, ctx.link().clone())
                                 }
                             }
                         }
@@ -52,8 +47,23 @@ impl App {
     }
 }
 
-// Render helper for hierarchical recursive file list
-fn render_file_items(items: &[FileItem], level: usize, link: Scope<App>) -> Html {
+fn flatten_files(items: &[FileItem]) -> Vec<FileItem> {
+    let mut files = Vec::new();
+    for item in items {
+        match item {
+            FileItem::File { .. } => {
+                files.push(item.clone());
+            }
+            FileItem::Directory { children, .. } => {
+                files.extend(flatten_files(children));
+            }
+        }
+    }
+    files
+}
+
+// Render helper for flat file list
+fn render_file_items(items: &[FileItem], _level: usize, link: Scope<App>) -> Html {
     html! {
         <>
             {for items.iter().map(|item| {
@@ -69,7 +79,7 @@ fn render_file_items(items: &[FileItem], level: usize, link: Scope<App>) -> Html
                         
                         html! {
                             <div class="uploaded-file-item">
-                                <div class="uploaded-file-name" style={format!("padding-left: {}px; word-break: break-all;", level * 20)}>
+                                <div class="uploaded-file-name" style="word-break: break-all;">
                                     {"📄 "}{name}
                                 </div>
                                 <div class="uploaded-file-size">{formatted_size}</div>
@@ -128,58 +138,7 @@ fn render_file_items(items: &[FileItem], level: usize, link: Scope<App>) -> Html
                             </div>
                         }
                     }
-                    FileItem::Directory { name, path, size: _, formatted_size, children, upload_date: _ } => {
-                        let name_c = name.clone();
-                        let path_c = path.clone();
-                        let path_d = path.clone();
-                        let link_c = link.clone();
-                        let link_d = link.clone();
-                        let link_e = link.clone();
-                        
-                        html! {
-                            <>
-                                <div class="uploaded-file-item directory-item">
-                                    <div class="uploaded-file-name" style={format!("padding-left: {}px; word-break: break-all; font-weight: 500;", level * 20)}>
-                                        {"📁 "}{name}
-                                    </div>
-                                    <div class="uploaded-file-size">{formatted_size}</div>
-                                    <div class="uploaded-file-date">{"-"}</div>
-                                    <div class="uploaded-file-actions">
-                                        <button class="action-btn rename-btn" onclick={
-                                            let p = path_c.clone();
-                                            let n = name_c.clone();
-                                            let l = link_c.clone();
-                                            Callback::from(move |e: MouseEvent| {
-                                                e.stop_propagation();
-                                                l.send_message(Msg::StartRename(p.clone(), n.clone()));
-                                            })
-                                        }>
-                                            {"Rename"}
-                                        </button>
-                                        <button class="action-btn delete-btn" onclick={
-                                            let p = path_d.clone();
-                                            let l = link_d.clone();
-                                            Callback::from(move |e: MouseEvent| {
-                                                e.stop_propagation();
-                                                l.send_message(Msg::DeleteFile(p.clone()));
-                                            })
-                                        }>
-                                            {"Delete"}
-                                        </button>
-                                    </div>
-                                </div>
-                                {if !children.is_empty() {
-                                    html! {
-                                        <div class="directory-children">
-                                            {render_file_items(children, level + 1, link_e.clone())}
-                                        </div>
-                                    }
-                                } else {
-                                    html! {}
-                                }}
-                            </>
-                        }
-                    }
+                    _ => html! {}
                 }
             })}
         </>
