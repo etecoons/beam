@@ -134,11 +134,28 @@ Start the service container:
 docker compose up -d
 ```
 
-### Build Container Locally
-To build the multi-stage, production-ready container yourself:
+# Build the multi-stage, production-ready container yourself:
+docker build -t rustdrop:local .
+```
+
+### Nix Layered Container Building (Alternative)
+
+For maximum isolation, reproducibility, and minimal footprints (no terminal tools, no shell, running strictly as `USER nobody`), you can compile and package the server using the provided Nix flake:
 
 ```bash
-docker build -t rustdrop:local .
+# 1. Build the layered Docker image tarball via Nix flake
+nix build .#dockerImage
+
+# 2. Load the resulting tarball image directly into Docker
+docker load < result
+
+# 3. Execute the Nix-built container
+docker run -d \
+  --name rustdrop-nix \
+  -p 4401:4401 \
+  -v ./uploads:/app/uploads \
+  -e RUSTDROP_PIN=123456 \
+  rustdrop-nix:latest
 ```
 
 ---
