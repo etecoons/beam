@@ -46,6 +46,15 @@ pub async fn init_upload(
     if size > max_size {
         return (StatusCode::PAYLOAD_TOO_LARGE, Json(json!({ "error": "File too large", "limit": max_size }))).into_response();
     }
+
+    if let Some(limit) = config.max_storage_limit {
+        let items = crate::routes::files::helpers::get_directory_contents(&config.upload_dir, "").unwrap_or_default();
+        let total_size = crate::routes::files::helpers::calculate_total_size(&items);
+        if total_size + size > limit {
+            tracing::warn!("Upload initialization blocked: storage limit exceeded (used: {}, limit: {})", total_size, limit);
+            return (StatusCode::INSUFFICIENT_STORAGE, Json(json!({ "error": "Storage limit exceeded" }))).into_response();
+        }
+    }
     
     let client_batch_id = headers.get("x-batch-id")
         .and_then(|h| h.to_str().ok());

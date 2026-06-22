@@ -53,9 +53,7 @@ async fn main() {
 
     let _ = fs::create_dir_all(&config.upload_dir);
     let _ = fs::create_dir_all(config.upload_dir.join(".metadata"));
-    let _ = fs::create_dir_all("frontend/dist");
-
-    start_batch_cleanup(upload_state.clone());
+    start_batch_cleanup(config.clone(), upload_state.clone());
 
     generate_pwa_manifest(&config);
 
@@ -70,6 +68,7 @@ async fn main() {
         .route("/index.html", get(serve_index))
         .route("/login.html", get(serve_login))
         .fallback_service(tower_http::services::ServeDir::new("frontend/dist"))
+        .layer(axum::middleware::from_fn_with_state(app_state.clone(), hsts_middleware))
         .layer(tower_http::cors::CorsLayer::permissive())
         .layer(Extension(config.clone()))
         .with_state(app_state);
@@ -190,4 +189,28 @@ fn generate_pwa_manifest(config: &AppConfig) {
     if let Ok(json) = serde_json::to_string_pretty(&pwa_manifest) {
         let _ = fs::write(pwa_path, json);
     }
+}
+
+async fn hsts_middleware(
+    State(config): State<Arc<AppConfig>>,
+    headers: axum::http::HeaderMap,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> impl IntoResponse {
+    let is_secure = headers
+        .get("x-forwarded-proto")
+        .and_then(|v| v.to_str().ok())
+        .map(|v| v.eq_ignore_ascii_case("https"))
+        .unwrap_or_else(|| config.base_url.starts_with("https"));
+
+    let mut response = next.run(request).await;
+
+    if is_secure {
+        response.headers_mut().insert(
+            axum::http::header::STRICT_TRANSPORT_SECURITY,
+            axum::http::HeaderValue::from_static("max-age=31536000; includeSubDomains"),
+        );
+    }
+
+    response
 }

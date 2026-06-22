@@ -33,6 +33,8 @@ services:
       # Additional available environment variables (commented out with defaults)
       # PORT: 3000  # Server port (default: 3000)
       # NODE_ENV: production  # Environment (development/production)
+      # MAX_STORAGE_LIMIT_GB: 10  # Optional: Total storage limit for uploads directory in GB
+      # RETENTION_PERIOD_DAYS: 7  # Optional: Automatically delete files older than X days
       # APPRISE_URL: ""  # Apprise notification URL (e.g. tgram://bottoken/chatid)
       # APPRISE_MESSAGE: "New file uploaded - {filename} ({size}), Storage used {storage}"  # Message template
       # APPRISE_SIZE_UNIT: "Auto"  # Size formatting unit (B, KB, MB, GB, TB, or Auto)
