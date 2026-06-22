@@ -1,6 +1,5 @@
 # Stage 1: Build the Frontend (Yew WebAssembly)
 FROM rust:1.96-slim as frontend-builder
-ENV CARGO_BUILD_JOBS=1
 WORKDIR /usr/src/app
 
 # Install compilation dependencies and Trunk binary
@@ -9,12 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 RUN rustup target add wasm32-unknown-unknown
-RUN case "$(uname -m)" in \
-      x86_64) ARCH=x86_64 ;; \
-      aarch64) ARCH=aarch64 ;; \
-      *) echo "Unsupported architecture" && exit 1 ;; \
-    esac && \
-    wget -qO- "https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-${ARCH}-unknown-linux-gnu.tar.gz" | tar -xzf- -C /usr/local/bin
+RUN wget -qO- "https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-x86_64-unknown-linux-gnu.tar.gz" | tar -xzf- -C /usr/local/bin
 
 COPY Cargo.toml Cargo.lock ./
 COPY backend/ ./backend/
@@ -24,7 +18,6 @@ RUN trunk build --release
 
 # Stage 2: Build the Backend
 FROM rust:1.96-slim as backend-builder
-ENV CARGO_BUILD_JOBS=1
 WORKDIR /usr/src/app
 
 # Install dependencies required to build native packages like openssl-sys
