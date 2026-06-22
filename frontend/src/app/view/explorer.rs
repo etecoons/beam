@@ -10,9 +10,9 @@ impl App {
     pub fn render_explorer(&self, ctx: &Context<Self>) -> Html {
         html! {
             <div id="uploadedFilesList" class="uploaded-files-section" style="padding: 0; background: transparent; box-shadow: none; margin: 0;">
-                <div class="uploaded-files-header" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-                    <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">{"Uploaded Files"}</h2>
-                    <div class="uploaded-files-stats" style="font-size: 0.9rem; color: var(--text-color-secondary);">
+                <div class="uploaded-files-header">
+                    <h2>{"Uploaded Files"}</h2>
+                    <div class="uploaded-files-stats">
                         <span id="totalFiles">
                             {format!("{} file{}", 
                                 self.uploaded_files.as_ref().map(|f| f.total_files).unwrap_or(0),
