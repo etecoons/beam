@@ -55,15 +55,9 @@ impl App {
                             <main>
                                 {self.render_uploader(ctx)}
                                 
-                                {if self.config.as_ref().map(|c| c.show_file_list).unwrap_or(false) {
-                                    html! {
-                                        <div class="editor-container" style="margin-top: 1.5rem; padding: 1.5rem; overflow-y: auto;">
-                                            {self.render_explorer(ctx)}
-                                        </div>
-                                    }
-                                } else {
-                                    html! {}
-                                }}
+                                <div class="editor-container" style="margin-top: 1.5rem; padding: 1.5rem; overflow-y: auto;">
+                                    {self.render_explorer(ctx)}
+                                </div>
                             </main>
                         </>
                     }

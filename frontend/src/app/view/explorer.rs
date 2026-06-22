@@ -32,7 +32,17 @@ impl App {
                             if data.items.is_empty() {
                                 html! { <div class="empty-message">{"No files uploaded yet"}</div> }
                             } else {
-                                render_file_items(&data.items, 0, ctx.link().clone())
+                                html! {
+                                    <>
+                                        <div class="explorer-grid-header">
+                                            <div>{"Name"}</div>
+                                            <div>{"Size"}</div>
+                                            <div>{"Upload Date"}</div>
+                                            <div style="text-align: right; padding-right: 15px;">{"Actions"}</div>
+                                        </div>
+                                        {render_file_items(&data.items, 0, ctx.link().clone())}
+                                    </>
+                                }
                             }
                         }
                     }}
@@ -58,13 +68,12 @@ fn render_file_items(items: &[FileItem], level: usize, link: Scope<App>) -> Html
                         let link_s = link.clone();
                         
                         html! {
-                            <div class="uploaded-file-item" style={format!("margin-left: {}px", level * 20)}>
-                                <div class="uploaded-file-info">
-                                    <div class="uploaded-file-name">{"📄 "}{name}</div>
-                                    <div class="uploaded-file-details">
-                                        {format!("{} • {}", formatted_size, format_date(upload_date))}
-                                    </div>
+                            <div class="uploaded-file-item">
+                                <div class="uploaded-file-name" style={format!("padding-left: {}px; word-break: break-all;", level * 20)}>
+                                    {"📄 "}{name}
                                 </div>
+                                <div class="uploaded-file-size">{formatted_size}</div>
+                                <div class="uploaded-file-date">{format_date(upload_date)}</div>
                                 <div class="uploaded-file-actions">
                                     <button class="action-btn download-btn" onclick={
                                         let p = path_c.clone();
@@ -123,20 +132,18 @@ fn render_file_items(items: &[FileItem], level: usize, link: Scope<App>) -> Html
                         let name_c = name.clone();
                         let path_c = path.clone();
                         let path_d = path.clone();
-                        let file_count = count_files_in_dir(children);
                         let link_c = link.clone();
                         let link_d = link.clone();
                         let link_e = link.clone();
                         
                         html! {
                             <>
-                                <div class="uploaded-file-item directory-item" style={format!("margin-left: {}px", level * 20)}>
-                                    <div class="uploaded-file-info">
-                                        <div class="uploaded-file-name">{"📁 "}{name}</div>
-                                        <div class="uploaded-file-details">
-                                            {format!("{} • {} file{}", formatted_size, file_count, if file_count != 1 { "s" } else { "" })}
-                                        </div>
+                                <div class="uploaded-file-item directory-item">
+                                    <div class="uploaded-file-name" style={format!("padding-left: {}px; word-break: break-all; font-weight: 500;", level * 20)}>
+                                        {"📁 "}{name}
                                     </div>
+                                    <div class="uploaded-file-size">{formatted_size}</div>
+                                    <div class="uploaded-file-date">{"-"}</div>
                                     <div class="uploaded-file-actions">
                                         <button class="action-btn rename-btn" onclick={
                                             let p = path_c.clone();
@@ -179,11 +186,3 @@ fn render_file_items(items: &[FileItem], level: usize, link: Scope<App>) -> Html
     }
 }
 
-fn count_files_in_dir(children: &[FileItem]) -> usize {
-    children.iter().map(|child| {
-        match child {
-            FileItem::File { .. } => 1,
-            FileItem::Directory { children: sub_children, .. } => count_files_in_dir(sub_children),
-        }
-    }).sum()
-}
