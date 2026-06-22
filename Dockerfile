@@ -1,5 +1,5 @@
 # Stage 1: Build the Frontend (Yew WebAssembly)
-FROM rust:1.85-slim as frontend-builder
+FROM rust:1.96-slim as frontend-builder
 WORKDIR /usr/src/app
 
 # Install compilation dependencies and Trunk binary
@@ -16,7 +16,7 @@ WORKDIR /usr/src/app/frontend
 RUN trunk build --release
 
 # Stage 2: Build the Backend
-FROM rust:1.85-slim as backend-builder
+FROM rust:1.96-slim as backend-builder
 WORKDIR /usr/src/app
 
 # Install dependencies required to build native packages like openssl-sys
