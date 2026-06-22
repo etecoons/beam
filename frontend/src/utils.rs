@@ -1,5 +1,5 @@
-use wasm_bindgen::JsValue;
 use crate::storage::StorageService;
+use wasm_bindgen::JsValue;
 
 pub fn get_saved_theme() -> String {
     StorageService::get_item("theme", "dark")

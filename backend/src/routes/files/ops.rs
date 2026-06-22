@@ -1,9 +1,9 @@
 use axum::{
+    Json,
     body::Body,
     extract::{Path, State},
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -14,9 +14,7 @@ use tokio_util::io::ReaderStream;
 
 use crate::config::AppConfig;
 use crate::routes::auth::RequirePin;
-use crate::routes::files::helpers::{
-    create_safe_content_disposition, get_content_type,
-};
+use crate::routes::files::helpers::{create_safe_content_disposition, get_content_type};
 
 #[derive(Deserialize)]
 pub struct RenamePayload {

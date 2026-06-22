@@ -1,17 +1,15 @@
-use std::path::{Path as StdPath, PathBuf};
 use axum::http::StatusCode;
 use serde_json::json;
+use std::path::{Path as StdPath, PathBuf};
 
 pub fn generate_batch_id() -> String {
     let now = chrono::Utc::now().timestamp_millis();
-    let rand_str: String = rand::Rng::sample_iter(
-        rand::thread_rng(),
-        &rand::distributions::Alphanumeric,
-    )
-    .take(9)
-    .map(char::from)
-    .collect::<String>()
-    .to_lowercase();
+    let rand_str: String =
+        rand::Rng::sample_iter(rand::thread_rng(), &rand::distributions::Alphanumeric)
+            .take(9)
+            .map(char::from)
+            .collect::<String>()
+            .to_lowercase();
     format!("{}-{}", now, rand_str)
 }
 
@@ -25,10 +23,7 @@ pub fn get_unique_filename(base_path: &StdPath, upload_dir: &StdPath) -> PathBuf
             .and_then(|e| e.to_str())
             .map(|e| format!(".{}", e))
             .unwrap_or_default();
-        let stem = base_path
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("");
+        let stem = base_path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
 
         check_path = parent.join(format!("{} ({}){}", stem, counter, ext));
         counter += 1;
@@ -42,12 +37,18 @@ pub fn validate_upload(
     file_size: u64,
 ) -> Result<(), (StatusCode, serde_json::Value)> {
     if filename.is_empty() {
-        return Err((StatusCode::BAD_REQUEST, json!({ "error": "Missing filename" })));
+        return Err((
+            StatusCode::BAD_REQUEST,
+            json!({ "error": "Missing filename" }),
+        ));
     }
 
     let max_size = config.max_file_size;
     if file_size > max_size {
-        return Err((StatusCode::PAYLOAD_TOO_LARGE, json!({ "error": "File too large", "limit": max_size })));
+        return Err((
+            StatusCode::PAYLOAD_TOO_LARGE,
+            json!({ "error": "File too large", "limit": max_size }),
+        ));
     }
 
     if let Some(limit) = config.max_storage_limit {
@@ -60,7 +61,10 @@ pub fn validate_upload(
                 total_size,
                 limit
             );
-            return Err((StatusCode::INSUFFICIENT_STORAGE, json!({ "error": "Storage limit exceeded" })));
+            return Err((
+                StatusCode::INSUFFICIENT_STORAGE,
+                json!({ "error": "Storage limit exceeded" }),
+            ));
         }
     }
 
@@ -84,7 +88,10 @@ pub fn validate_extension(
                 safe_filename,
                 file_ext
             );
-            return Err((StatusCode::BAD_REQUEST, json!({ "error": "File type not allowed", "receivedExtension": file_ext })));
+            return Err((
+                StatusCode::BAD_REQUEST,
+                json!({ "error": "File type not allowed", "receivedExtension": file_ext }),
+            ));
         }
     }
     Ok(())
@@ -137,4 +144,3 @@ pub fn get_remapped_folder_path(
     let remapped_path: PathBuf = remapped_parts.iter().collect();
     config.upload_dir.join(remapped_path)
 }
-

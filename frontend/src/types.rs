@@ -59,8 +59,6 @@ pub struct UploadProgress {
     pub error_color: Option<String>,
 }
 
-
-
 #[derive(Clone, Debug)]
 pub struct RenameData {
     pub item_path: String,

@@ -15,7 +15,11 @@ impl App {
             .as_ref()
             .map(|c| c.site_title.as_str())
             .unwrap_or("RustDrop");
-        let pin_required = self.config.as_ref().map(|c| c.pin_required).unwrap_or(false);
+        let pin_required = self
+            .config
+            .as_ref()
+            .map(|c| c.pin_required)
+            .unwrap_or(false);
 
         html! {
             <>

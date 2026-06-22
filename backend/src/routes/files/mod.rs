@@ -14,9 +14,7 @@ use std::fs;
 use std::path::Path as StdPath;
 use std::sync::Arc;
 
-use self::helpers::{
-    calculate_total_size, count_files, get_directory_contents,
-};
+use self::helpers::{calculate_total_size, count_files, get_directory_contents};
 use crate::config::AppConfig;
 use crate::routes::auth::RequirePin;
 

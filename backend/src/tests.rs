@@ -57,7 +57,7 @@ fn test_lockout_attempts() {
         let _ = security::record_attempt(ip);
     }
     assert!(security::is_locked_out(ip));
-    
+
     security::reset_attempts(ip);
     assert!(!security::is_locked_out(ip));
 }

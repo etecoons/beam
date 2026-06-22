@@ -187,8 +187,6 @@ pub fn format_file_size(bytes: u64, unit: Option<&str>) -> String {
     format!("{:.2}{}", size, units[unit_idx])
 }
 
-
-
 pub fn is_valid_batch_id(batch_id: &str) -> bool {
     let parts: Vec<&str> = batch_id.split('-').collect();
     if parts.len() != 2 {

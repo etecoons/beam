@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use crate::config::AppConfig;
+use std::sync::Arc;
 
 pub async fn send_notification(filename: &str, size_bytes: u64, config: &Arc<AppConfig>) {
     let url = match &config.apprise_url {
@@ -7,7 +7,8 @@ pub async fn send_notification(filename: &str, size_bytes: u64, config: &Arc<App
         None => return,
     };
 
-    let formatted_size = crate::utils::format_file_size(size_bytes, config.apprise_size_unit.as_deref());
+    let formatted_size =
+        crate::utils::format_file_size(size_bytes, config.apprise_size_unit.as_deref());
 
     // Gather storage details if limit exists
     let storage_str = if let Some(limit) = config.max_storage_limit {
@@ -43,7 +44,12 @@ pub async fn send_notification(filename: &str, size_bytes: u64, config: &Arc<App
     });
 
     tracing::info!("Sending notification via Apprise to URL: {}", url);
-    match client.post("https://api.apprise.io/notify").json(&body).send().await {
+    match client
+        .post("https://api.apprise.io/notify")
+        .json(&body)
+        .send()
+        .await
+    {
         Ok(resp) => {
             if resp.status().is_success() {
                 tracing::info!("Notification sent successfully.");

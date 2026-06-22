@@ -80,7 +80,8 @@ pub async fn upload_chunk(
         delete_upload_metadata(&config.upload_dir, &upload_id).await;
         state.active_uploads.lock().unwrap().remove(&upload_id);
         state.file_handles.lock().unwrap().remove(&upload_id);
-        return Json(json!({ "bytesReceived": metadata.file_size, "progress": 100 })).into_response();
+        return Json(json!({ "bytesReceived": metadata.file_size, "progress": 100 }))
+            .into_response();
     }
 
     let mut write_size = chunk_size;
@@ -242,5 +243,3 @@ pub async fn upload_chunk(
 
     Json(json!({ "bytesReceived": metadata.bytes_received, "progress": progress })).into_response()
 }
-
-

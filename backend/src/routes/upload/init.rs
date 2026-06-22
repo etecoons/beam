@@ -14,7 +14,7 @@ use crate::config::AppConfig;
 use crate::routes::auth::RequirePin;
 use crate::routes::upload::UploadState;
 use crate::routes::upload::metadata::{
-    UploadMetadata, write_upload_metadata, delete_upload_metadata,
+    UploadMetadata, delete_upload_metadata, write_upload_metadata,
 };
 
 #[derive(Deserialize)]
@@ -37,7 +37,9 @@ pub async fn init_upload(
     headers: HeaderMap,
     Json(payload): Json<InitUploadPayload>,
 ) -> Response {
-    if let Err((status, err_json)) = super::utils::validate_upload(&config, &payload.filename, payload.file_size) {
+    if let Err((status, err_json)) =
+        super::utils::validate_upload(&config, &payload.filename, payload.file_size)
+    {
         return (status, Json(err_json)).into_response();
     }
 
@@ -90,7 +92,8 @@ pub async fn init_upload(
 
     let path_parts: Vec<&str> = safe_filename.split('/').filter(|s| !s.is_empty()).collect();
     if path_parts.len() > 1 {
-        final_file_path = super::utils::get_remapped_folder_path(&config, &state, &path_parts, &batch_id);
+        final_file_path =
+            super::utils::get_remapped_folder_path(&config, &state, &path_parts, &batch_id);
         if !crate::utils::is_path_within_upload_dir(&final_file_path, &config.upload_dir, false) {
             return (
                 StatusCode::FORBIDDEN,
@@ -195,11 +198,9 @@ pub async fn init_upload(
         let config_clone = config.clone();
         let filename_clone = payload.filename.clone();
         tokio::spawn(async move {
-            crate::services::send_notification(&filename_clone, 0, &config_clone)
-                .await;
+            crate::services::send_notification(&filename_clone, 0, &config_clone).await;
         });
     }
 
     (StatusCode::OK, Json(InitUploadResponse { upload_id })).into_response()
 }
-

@@ -12,12 +12,11 @@ impl StorageService {
     }
 
     pub fn get_item(key: &str, default: &str) -> String {
-        let val = Self::local_storage()
-            .and_then(|s| s.get_item(key).ok().flatten());
+        let val = Self::local_storage().and_then(|s| s.get_item(key).ok().flatten());
         match val {
             Some(v) => {
                 if v.starts_with('"') && v.ends_with('"') && v.len() >= 2 {
-                    let clean = v[1..v.len()-1].to_string();
+                    let clean = v[1..v.len() - 1].to_string();
                     Self::set_item(key, &clean);
                     clean
                 } else {

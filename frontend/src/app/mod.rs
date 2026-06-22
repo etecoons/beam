@@ -10,9 +10,7 @@ use std::collections::HashMap;
 use yew::prelude::*;
 
 use crate::api::fetch_config;
-use crate::types::{
-    FileListResponse, FrontendConfig, Language, Msg, RenameData, UploadProgress,
-};
+use crate::types::{FileListResponse, FrontendConfig, Language, Msg, RenameData, UploadProgress};
 use crate::utils::{get_saved_theme, set_theme_attribute};
 
 pub struct App {

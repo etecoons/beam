@@ -2,9 +2,9 @@ mod config;
 mod routes;
 mod security;
 mod services;
-mod utils;
 #[cfg(test)]
 mod tests;
+mod utils;
 
 use axum::http::StatusCode;
 use axum::{
