@@ -32,7 +32,6 @@ RustDrop is a lightweight, self-hosted, and high-performance file sharing web ap
 *   **Compilation Environment**: Rust Toolchain 1.80+ installed.
 *   **WebAssembly Target**: `wasm32-unknown-unknown` target.
 *   **Frontend Bundler**: `trunk` binary installed.
-*   **Notification Engine**: `apprise` binary installed and accessible in the system PATH (if notifications are used).
 
 ### Environment Variables
 
@@ -40,8 +39,8 @@ Configure these settings inside a `.env` file at the project root or inject them
 
 | Variable | Description | Default | Status |
 | :--- | :--- | :--- | :--- |
-| `PORT` | Port the web server listens on. | `3000` | Optional |
-| `BASE_URL` | Application base URL (must end with a `/`). | `http://localhost:PORT/` | Optional |
+| `PORT` | Port the web server listens on. | `4401` | Optional |
+| `BASE_URL` | Application base URL (must end with a `/`). | `http://localhost:4401/` | Optional |
 | `UPLOAD_DIR` | Main directory path where uploaded files are stored. | `./local_uploads` | Optional |
 | `LOCAL_UPLOAD_DIR` | Fallback directory path if `UPLOAD_DIR` is empty or unset. | `./local_uploads` | Optional |
 | `MAX_FILE_SIZE` | Maximum file size limit in MB. | `1024` (1GB) | Optional |
@@ -60,56 +59,56 @@ Configure these settings inside a `.env` file at the project root or inject them
 | `APPRISE_SIZE_UNIT` | Size format unit for notifications (B, KB, MB, GB, TB, or Auto). | `Auto` | Optional |
 | `ALLOWED_EXTENSIONS` | Comma-separated list of allowed file extensions (e.g. `.png,.pdf`). | None (All) | Optional |
 | `CLIENT_MAX_RETRIES` | Max network retry attempts client-side before failing an upload. | `5` | Optional |
-
+ 
 > **Note**: Default Apprise message is: `"New file uploaded - {filename} ({size}), Storage used {storage}"`.
-
+ 
 ---
-
+ 
 ## Quick Start
-
+ 
 Spin up your environment locally using one of the two execution paths below:
-
+ 
 ### Path A: Local Development (Build from Source)
 This method is recommended for customizing code or testing locally:
-
+ 
 ```bash
 # 1. Add WASM target and install Trunk
 rustup target add wasm32-unknown-unknown
 cargo install --locked trunk
-
+ 
 # 2. Configure environment values
 cp .env.example .env
-
+ 
 # 3. Build & bundle the WebAssembly frontend
 cd frontend
 trunk build --release
 cd ..
-
+ 
 # 4. Compile and start the backend HTTP server
 cargo run --release --bin backend
 ```
-
-Access the app at [http://localhost:3000](http://localhost:3000).
-
+ 
+Access the app at [http://localhost:4401](http://localhost:4401).
+ 
 ### Path B: Production Container (Docker Run)
 Run RustDrop immediately without configuring compilation toolchains:
-
+ 
 ```bash
 docker run -d \
-  -p 3000:3000 \
+  -p 4401:4401 \
   -v ./uploads:/app/uploads \
   -e RUSTDROP_PIN=123456 \
   -e SHOW_FILE_LIST=true \
   ubermetroid/rustdrop:latest
 ```
-
+ 
 ---
-
+ 
 ## Docker & Docker Compose Configurations
-
+ 
 ### Docker Compose Setup
 For a robust, persistent service layout, create a `docker-compose.yml` file:
-
+ 
 ```yaml
 services:
   rustdrop:
@@ -117,12 +116,12 @@ services:
     container_name: rustdrop
     restart: unless-stopped
     ports:
-      - 3000:3000
+      - 4401:4401
     volumes:
       - ./uploads:/app/uploads
     environment:
       UPLOAD_DIR: /app/uploads
-      BASE_URL: http://localhost:3000/
+      BASE_URL: http://localhost:4401/
       RUSTDROP_TITLE: RustDrop
       MAX_FILE_SIZE: 1024
       RUSTDROP_PIN: 123456
