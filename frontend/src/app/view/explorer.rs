@@ -10,21 +10,6 @@ impl App {
     pub fn render_explorer(&self, ctx: &Context<Self>) -> Html {
         html! {
             <div id="uploadedFilesList" class="uploaded-files-section" style="padding: 0; background: transparent; box-shadow: none; margin: 0;">
-                <div class="uploaded-files-header">
-                    <h2>{"Uploaded Files"}</h2>
-                    <div class="uploaded-files-stats">
-                        <span id="totalFiles">
-                            {format!("{} file{}", 
-                                self.uploaded_files.as_ref().map(|f| f.total_files).unwrap_or(0),
-                                if self.uploaded_files.as_ref().map(|f| f.total_files).unwrap_or(0) != 1 { "s" } else { "" }
-                            )}
-                        </span>
-                        {" • "}
-                        <span id="totalSize">
-                            {self.uploaded_files.as_ref().map(|f| f.formatted_total_size.clone()).unwrap_or_else(|| "0 Bytes".to_string())}
-                        </span>
-                    </div>
-                </div>
                 <div id="uploadedFilesContent" class="uploaded-files-content">
                     {match &self.uploaded_files {
                         None => html! { <div class="loading-message">{"Loading files..."}</div> },
