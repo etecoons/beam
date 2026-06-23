@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Container version="2">
+  <Name>RustDrop</Name>
+  <Repository>ubermetroid/rustdrop:latest</Repository>
+  <Registry>https://hub.docker.com/r/ubermetroid/rustdrop</Registry>
+  
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Shell>sh</Shell>
+  <ExtraParams>--restart unless-stopped --log-opt max-size=50m</ExtraParams>
+
+  <Support>https://github.com/UberMetroid/RustDrop/issues</Support>
+  <Project>https://github.com/UberMetroid/RustDrop</Project>
+  <Overview>
+    RustDrop is a self-hosted, lightweight file-sharing portal built in Rust with Yew and Axum.&#xD;
+    &#xD;
+    Key Features:&#xD;
+    - Smooth drag-and-drop uploads for both files and directories.&#xD;
+    - Dynamic customizable file retention and total storage quotas.&#xD;
+    - Security locking using an access PIN.&#xD;
+    - Optional allowed file extensions filter.
+  </Overview>
+  <Category>Tools:Utilities;Network:Web;</Category>
+  <WebUI>http://[IP]:[PORT:4401]/</WebUI>
+  <Icon>https://raw.githubusercontent.com/UberMetroid/RustDrop/main/frontend/Assets/assets/icon.png</Icon>
+  <TemplateURL>https://raw.githubusercontent.com/UberMetroid/unraid-templates/main/templates/rustdrop.xml</TemplateURL>
+  <Requires>Ensure the Uploads Path volume has sufficient disk space for the expected file sizes.</Requires>
+  
+  <!-- Port Mapping -->
+  <Config Name="WebUI Port" Target="4401" Default="4401" Mode="tcp" Description="The main web interface port." Type="Port" Display="always" Required="true" Mask="false">4401</Config>
+  
+  <!-- Path Mappings -->
+  <Config Name="App Data" Target="/usr/src/app/data" Default="/mnt/user/appdata/rustdrop/data" Mode="rw" Description="Persistent storage for database and config files." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/rustdrop/data</Config>
+  
+  <Config Name="Uploads Path" Target="/usr/src/app/uploads" Default="/mnt/user/appdata/rustdrop/uploads" Mode="rw" Description="Directory where uploaded files are stored." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/rustdrop/uploads</Config>
+  
+  <!-- Variables -->
+  <Config Name="Access PIN" Target="RUSTDROP_PIN" Default="" Description="Optional access PIN to lock the file portal. Leave empty for public mode." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  
+  <Config Name="Site Title" Target="RUSTDROP_TITLE" Default="RustDrop" Description="Custom site title rendered in the navigation header." Type="Variable" Display="always" Required="false" Mask="false">RustDrop</Config>
+
+  <Config Name="Max File Size" Target="MAX_FILE_SIZE" Default="20" Description="Maximum allowed single file upload size (in GB)." Type="Variable" Display="always" Required="false" Mask="false">20</Config>
+
+  <Config Name="Max Storage Limit" Target="MAX_STORAGE_LIMIT_GB" Default="100" Description="Combined maximum total storage limit for all uploaded files (in GB)." Type="Variable" Display="always" Required="false" Mask="false">100</Config>
+
+  <Config Name="Retention Period Days" Target="RETENTION_PERIOD_DAYS" Default="30" Description="Number of days to store uploaded files before automatically purging them." Type="Variable" Display="always" Required="false" Mask="false">30</Config>
+  
+
+  <Config Name="Allowed Extensions" Target="ALLOWED_EXTENSIONS" Default="" Description="Comma-separated list of allowed file extensions (e.g. pdf,png,zip). Leave empty to allow all." Type="Variable" Display="always" Required="false" Mask="false"></Config>
+
+  <Config Name="Timezone" Target="TZ" Default="UTC" Description="Timezone for the container logs." Type="Variable" Display="advanced" Required="false" Mask="false">UTC</Config>
+</Container>

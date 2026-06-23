@@ -13,10 +13,12 @@ target/
 **/target/
 frontend/dist/
 frontend/target/
+dist/
 
 # Local data & uploads
 local_uploads/
 uploads/
+data/
 
 # Development configurations
 .vscode/

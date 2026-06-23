@@ -2,6 +2,12 @@
 name = "backend"
 version = "1.2.0"
 edition = "2024"
+authors = ["UberMetroid <admin@ubermetroid.com>"]
+license = "GPL-3.0-only"
+repository = "https://github.com/UberMetroid/RustDrop"
+homepage = "https://github.com/UberMetroid/RustDrop"
+description = "Axum backend service for RustDrop."
+readme = "../README.md"
 
 [dependencies]
 tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "net", "fs", "time", "sync"] }

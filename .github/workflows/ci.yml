@@ -73,4 +73,4 @@ jobs:
         run: cargo test --workspace --exclude frontend
 
       - name: Build Backend
-        run: cargo build --release --bin backend
+        run: cargo build --release --workspace --exclude frontend
