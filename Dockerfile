@@ -33,6 +33,7 @@ RUN cargo build --release --bin backend
 
 # Stage 3: Final package
 FROM debian:bookworm-slim
+LABEL org.opencontainers.image.source="https://github.com/UberMetroid/RustDrop"
 WORKDIR /app
 
 # Install runtime dependencies (SSL certificates for HTTPS notification requests)
