@@ -205,18 +205,6 @@ pub async fn upload_chunk(
                     let mut active = state.active_uploads.lock().unwrap();
                     active.remove(&upload_id);
                 }
-
-                let config_clone = config.clone();
-                let filename_clone = metadata.original_filename.clone();
-                let filesize_clone = metadata.file_size;
-                tokio::spawn(async move {
-                    crate::services::send_notification(
-                        &filename_clone,
-                        filesize_clone,
-                        &config_clone,
-                    )
-                    .await;
-                });
             }
             Err(e) => {
                 if e.kind() == std::io::ErrorKind::NotFound {

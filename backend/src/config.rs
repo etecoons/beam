@@ -14,9 +14,6 @@ pub struct AppConfig {
     pub trust_proxy: bool,
     pub trusted_proxy_ips: Option<Vec<String>>,
     pub site_title: String,
-    pub apprise_url: Option<String>,
-    pub apprise_message: String,
-    pub apprise_size_unit: Option<String>,
     pub allowed_extensions: Option<Vec<String>>,
     pub client_max_retries: u32,
     pub max_storage_limit: Option<u64>,
@@ -94,13 +91,6 @@ impl AppConfig {
             .or_else(|_| env::var("SITE_TITLE"))
             .unwrap_or_else(|_| "RustDrop".to_string());
 
-        let apprise_url = env::var("APPRISE_URL").ok().filter(|s| !s.is_empty());
-
-        let apprise_message = env::var("APPRISE_MESSAGE").unwrap_or_else(|_| {
-            "New file uploaded - {filename} ({size}), Storage used {storage}".to_string()
-        });
-
-        let apprise_size_unit = env::var("APPRISE_SIZE_UNIT").ok().filter(|s| !s.is_empty());
 
         let allowed_extensions = env::var("ALLOWED_EXTENSIONS")
             .ok()
@@ -143,9 +133,6 @@ impl AppConfig {
             trust_proxy,
             trusted_proxy_ips,
             site_title,
-            apprise_url,
-            apprise_message,
-            apprise_size_unit,
             allowed_extensions,
             client_max_retries,
             max_storage_limit,

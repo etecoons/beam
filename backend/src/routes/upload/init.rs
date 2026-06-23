@@ -194,12 +194,6 @@ pub async fn init_upload(
             let mut active = state.active_uploads.lock().unwrap();
             active.remove(&upload_id);
         }
-
-        let config_clone = config.clone();
-        let filename_clone = payload.filename.clone();
-        tokio::spawn(async move {
-            crate::services::send_notification(&filename_clone, 0, &config_clone).await;
-        });
     }
 
     (StatusCode::OK, Json(InitUploadResponse { upload_id })).into_response()

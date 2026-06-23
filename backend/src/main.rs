@@ -1,7 +1,6 @@
 mod config;
 mod routes;
 mod security;
-mod services;
 #[cfg(test)]
 mod tests;
 mod utils;

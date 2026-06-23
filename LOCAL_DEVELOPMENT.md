@@ -5,8 +5,7 @@
 - **Node.js** >= 20.0.0  
   _Why?_: The app uses features only available in Node 20+.
 - **npm** (comes with Node.js)
-- **Python 3** (for notification testing, optional)
-- **Apprise** (for notification testing, optional)
+
 
 ## Setup Instructions
 
@@ -29,7 +28,6 @@
      - `LOCAL_UPLOAD_DIR=./local_uploads`
      - `MAX_FILE_SIZE=1024`
      - `RUSTDROP_PIN=` (optional, for PIN protection)
-     - `APPRISE_URL=` (optional, for notifications)
 
 3. **Install dependencies**
 
@@ -65,33 +63,6 @@
 
 ---
 
-## Notification Testing (Python/Apprise)
-
-If you want to test notifications (e.g., for new uploads):
-
-1. **Install Python 3**
-
-   - [Download Python](https://www.python.org/downloads/) if not already installed.
-
-2. **Install Apprise**
-
-   ```bash
-   pip install apprise
-   ```
-
-3. **Configure Apprise in `.env`**
-
-   - Set `APPRISE_URL` to your notification service URL (see [Apprise documentation](https://github.com/caronc/apprise)).
-   - Example for a local test:
-     ```
-     APPRISE_URL=mailto://your@email.com
-     ```
-
-4. **Trigger a test notification**
-   - Upload a file via the web UI.
-   - If configured, you should receive a notification.
-
----
 
 ## Troubleshooting
 
@@ -111,11 +82,6 @@ If you want to test notifications (e.g., for new uploads):
 - Ensure `LOCAL_UPLOAD_DIR` exists and is writable.
 - Check file size and extension restrictions in `.env`.
 
-**Problem:** Notifications not sent  
-**Solution:**
-
-- Verify `APPRISE_URL` is set and correct.
-- Ensure Apprise is installed and accessible.
 
 **Problem:** Permission denied on uploads  
 **Solution:**
