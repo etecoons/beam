@@ -118,7 +118,7 @@ impl App {
                     if let Some((msg, cls)) = &self.active_notification {
                         html! { <div class={format!("footer-status-text {}", cls)}>{ msg }</div> }
                     } else {
-                        html! {}
+                        html! { <div class="footer-status-text success">{"Ready"}</div> }
                     }
                 }
             </footer>
