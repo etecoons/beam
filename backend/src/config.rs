@@ -18,6 +18,7 @@ pub struct AppConfig {
     pub client_max_retries: u32,
     pub max_storage_limit: Option<u64>,
     pub retention_period_days: Option<u64>,
+    pub allowed_origins: String,
 }
 
 impl AppConfig {
@@ -36,6 +37,8 @@ impl AppConfig {
         if !base_url.ends_with('/') {
             base_url.push('/');
         }
+
+        let allowed_origins = env::var("ALLOWED_ORIGINS").unwrap_or_else(|_| "*".to_string());
 
         // Determine upload directory
         let upload_dir = if let Ok(dir) = env::var("UPLOAD_DIR") {
@@ -137,6 +140,7 @@ impl AppConfig {
             client_max_retries,
             max_storage_limit,
             retention_period_days,
+            allowed_origins,
         }
     }
 }

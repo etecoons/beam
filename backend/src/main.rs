@@ -65,6 +65,29 @@ async fn main() {
         .nest("/upload", crate::routes::upload::router())
         .nest("/files", crate::routes::files::router());
 
+    let cors = if config.allowed_origins == "*" {
+        tower_http::cors::CorsLayer::permissive()
+    } else {
+        let mut cors = tower_http::cors::CorsLayer::new()
+            .allow_methods([
+                axum::http::Method::GET,
+                axum::http::Method::POST,
+                axum::http::Method::PUT,
+                axum::http::Method::DELETE,
+            ])
+            .allow_headers([
+                axum::http::header::CONTENT_TYPE,
+                axum::http::header::COOKIE,
+                axum::http::header::HeaderName::from_static("x-pin"),
+            ]);
+        for origin in config.allowed_origins.split(',') {
+            if let Ok(parsed) = origin.trim().parse::<axum::http::HeaderValue>() {
+                cors = cors.allow_origin(parsed);
+            }
+        }
+        cors.allow_credentials(true)
+    };
+
     let app = Router::new()
         .nest("/api", api_routes)
         .route("/", get(serve_index))
@@ -75,7 +98,7 @@ async fn main() {
             app_state.clone(),
             hsts_middleware,
         ))
-        .layer(tower_http::cors::CorsLayer::permissive())
+        .layer(cors)
         .layer(Extension(config.clone()))
         .with_state(app_state);
 
