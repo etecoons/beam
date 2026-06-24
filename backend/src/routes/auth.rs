@@ -1,5 +1,5 @@
 use axum::{
-    Json, Router, async_trait,
+    Json, Router,
     extract::{ConnectInfo, FromRequestParts, State},
     http::{HeaderMap, StatusCode, request::Parts},
     response::{IntoResponse, Response},
@@ -20,7 +20,6 @@ use crate::security::{
 // Extractor to require a valid PIN if one is configured
 pub struct RequirePin;
 
-#[async_trait]
 impl<S> FromRequestParts<S> for RequirePin
 where
     S: Send + Sync,
