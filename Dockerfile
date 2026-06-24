@@ -25,7 +25,7 @@ COPY frontend/ ./frontend/
 RUN cargo build --release --bin backend
 
 # Stage 3: Final package
-FROM alpine:3.18
+FROM alpine:latest
 LABEL org.opencontainers.image.source="https://github.com/UberMetroid/RustDrop"
 WORKDIR /app
 
