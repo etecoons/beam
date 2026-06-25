@@ -15,6 +15,11 @@ impl App {
                         let site_title = conf.site_title.clone();
                         self.config = Some(conf.clone());
 
+                        if !conf.enable_themes {
+                            self.theme = "tourian".to_string();
+                            set_theme_attribute("tourian");
+                        }
+
                         // Set document title dynamically
                         if let Some(doc) = gloo_utils::document()
                             .default_view()

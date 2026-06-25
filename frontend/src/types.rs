@@ -1,6 +1,10 @@
 #![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FrontendConfig {
     pub site_title: String,
@@ -12,6 +16,10 @@ pub struct FrontendConfig {
     pub client_max_retries: u32,
     #[serde(default)]
     pub enable_translation: bool,
+    #[serde(default = "default_true")]
+    pub enable_themes: bool,
+    #[serde(default = "default_true")]
+    pub enable_print: bool,
 }
 
 #[derive(Deserialize, Debug, Clone)]

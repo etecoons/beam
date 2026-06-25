@@ -20,6 +20,8 @@ pub struct AppConfig {
     pub retention_period_days: Option<u64>,
     pub allowed_origins: String,
     pub enable_translation: bool,
+    pub enable_themes: bool,
+    pub enable_print: bool,
 }
 
 impl AppConfig {
@@ -130,6 +132,14 @@ impl AppConfig {
             .map(|v| v == "true" || v == "on")
             .unwrap_or(false);
 
+        let enable_themes = env::var("ENABLE_THEMES")
+            .map(|v| v != "false" && v != "off")
+            .unwrap_or(true);
+
+        let enable_print = env::var("ENABLE_PRINT")
+            .map(|v| v != "false" && v != "off")
+            .unwrap_or(true);
+
         Self {
             port,
             node_env,
@@ -148,6 +158,8 @@ impl AppConfig {
             retention_period_days,
             allowed_origins,
             enable_translation,
+            enable_themes,
+            enable_print,
         }
     }
 }

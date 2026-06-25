@@ -85,6 +85,9 @@ struct FrontendConfig {
     pin_length: usize,
     max_file_size: u64,
     client_max_retries: u32,
+    enable_translation: bool,
+    enable_themes: bool,
+    enable_print: bool,
 }
 
 pub fn router() -> Router<crate::AppState> {
@@ -104,6 +107,9 @@ async fn get_config(State(config): State<Arc<AppConfig>>) -> Json<FrontendConfig
         pin_length: config.pin.as_ref().map(|p| p.len()).unwrap_or(0),
         max_file_size: config.max_file_size,
         client_max_retries: config.client_max_retries,
+        enable_translation: config.enable_translation,
+        enable_themes: config.enable_themes,
+        enable_print: config.enable_print,
     })
 }
 
@@ -112,7 +118,9 @@ async fn pin_required(State(config): State<Arc<AppConfig>>) -> Json<serde_json::
     Json(json!({
         "required": config.pin.is_some(),
         "length": length,
-        "enable_translation": config.enable_translation
+        "enable_translation": config.enable_translation,
+        "enable_themes": config.enable_themes,
+        "enable_print": config.enable_print,
     }))
 }
 
