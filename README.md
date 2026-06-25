@@ -10,7 +10,7 @@ Beam is a lightweight, self-hosted, and high-performance file sharing web applic
 
 ## 🐳 Container Installation
 
-### Option 1: Docker Compose (Recommended)
+
 
 1. Create a `docker-compose.yml` file:
 
@@ -44,20 +44,6 @@ docker compose up -d
 
 3. Open your browser and navigate to `http://localhost:4401`.
 
-### Option 2: Docker CLI
-
-Run the following command to start the container:
-
-```bash
-docker run -d \
-  --name beam \
-  --restart unless-stopped \
-  -p 4401:4401 \
-  -v $(pwd)/uploads:/app/uploads \
-  -e BEAM_PIN=123456 \
-  -e SHOW_FILE_LIST=true \
-  ubermetroid/beam:latest
-```
 
 ---
 
@@ -87,78 +73,8 @@ Configure these settings inside your Docker Compose environment or container env
 | `ENABLE_PRINT` | Enable the print button in the navigation header (true/false). | `true` |
 | `MAX_ATTEMPTS` | Number of failed PIN attempts permitted before locking out the user client IP address. | `5` |
 
-## 📂 Repository Structure
-
-```
-.
-├── backend/
-│   ├── Cargo.toml
-│   └── src
-│       ├── config.rs
-│       ├── main.rs
-│       ├── routes
-│       │   ├── auth.rs
-│       │   ├── files
-│       │   │   ├── helpers.rs
-│       │   │   ├── mod.rs
-│       │   │   └── ops.rs
-│       │   ├── mod.rs
-│       │   └── upload
-│       │       ├── cancel.rs
-│       │       ├── chunk.rs
-│       │       ├── init.rs
-│       │       ├── metadata.rs
-│       │       ├── mod.rs
-│       │       └── utils.rs
-│       ├── security.rs
-│       ├── tests.rs
-│       └── utils.rs
-└── frontend/
-    ├── Assets
-    │   ├── app.css
-    │   ├── assets
-    │   │   ├── icon.png
-    │   │   └── icon.svg
-    │   ├── base.css
-    │   ├── header.css
-    │   ├── login.css
-    │   └── service-worker.js
-    ├── Cargo.toml
-    ├── index.html
-    └── src
-        ├── api.rs
-        ├── app
-        │   ├── mod.rs
-        │   ├── update_config.rs
-        │   ├── update_files.rs
-        │   ├── update_pin.rs
-        │   ├── update_toast.rs
-        │   ├── update_upload.rs
-        │   ├── upload_task.rs
-        │   └── view
-        │       ├── explorer.rs
-        │       ├── mod.rs
-        │       ├── pin_entry.rs
-        │       └── uploader.rs
-        ├── header.rs
-        ├── i18n
-        │   ├── de.rs
-        │   ├── en.rs
-        │   ├── es.rs
-        │   ├── fr.rs
-        │   ├── ja.rs
-        │   ├── pt.rs
-        │   ├── ru.rs
-        │   └── zh.rs
-        ├── i18n.rs
-        ├── js_api.rs
-        ├── main.rs
-        ├── storage.rs
-        ├── types.rs
-        └── utils.rs
-```
 
 
 ---
 
-*Note: This repository was forked from [RustDrop](https://github.com/UberMetroid/RustDrop).*
+*Note: This repository was forked from [DumbDrop](https://github.com/DumbWareio/DumbDrop).*
