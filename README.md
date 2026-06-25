@@ -8,6 +8,15 @@ Beam is a lightweight, self-hosted, and high-performance file sharing web applic
 
 ---
 
+## 📦 Container Registry
+
+The Docker image is published to the following registries:
+
+*   **Docker Hub (Recommended)**: [ubermetroid/beam](https://hub.docker.com/r/ubermetroid/beam)
+*   **GitHub Container Registry (GHCR)**: [ghcr.io/ubermetroid/beam](https://github.com/UberMetroid/beam/pkgs/container/beam)
+
+---
+
 ## 🐳 Container Installation
 
 
