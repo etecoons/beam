@@ -21,10 +21,10 @@ use crate::routes::auth::RequirePin;
 pub fn router() -> Router<crate::AppState> {
     Router::new()
         .route("/", get(list_files))
-        .route("/info/*path", get(file_info))
-        .route("/download/*path", get(ops::download_file))
-        .route("/delete/*path", delete(ops::delete_file))
-        .route("/rename/*path", put(ops::rename_file))
+        .route("/info/{*path}", get(file_info))
+        .route("/download/{*path}", get(ops::download_file))
+        .route("/delete/{*path}", delete(ops::delete_file))
+        .route("/rename/{*path}", put(ops::rename_file))
 }
 
 async fn list_files(State(config): State<Arc<AppConfig>>, _auth: RequirePin) -> impl IntoResponse {

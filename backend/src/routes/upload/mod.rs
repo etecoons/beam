@@ -15,8 +15,8 @@ use self::init::init_upload;
 pub fn router() -> Router<crate::AppState> {
     Router::new()
         .route("/init", post(init_upload))
-        .route("/chunk/:uploadId", post(upload_chunk))
-        .route("/cancel/:uploadId", post(cancel_upload))
+        .route("/chunk/{uploadId}", post(upload_chunk))
+        .route("/cancel/{uploadId}", post(cancel_upload))
 }
 
 pub struct UploadState {
