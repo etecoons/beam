@@ -1,3 +1,13 @@
+/* ==========================================
+   Standardized Login PIN Stylesheet
+   ========================================== */
+
+/* Scoped Box-Sizing Reset for login container and descendants */
+.login-container,
+.login-container * {
+    box-sizing: border-box;
+}
+
 /* PIN Verification Page */
 .login-container {
     position: relative;
@@ -11,7 +21,7 @@
     padding: 2.5rem 2rem;
     border-radius: 12px;
     border: 1px solid var(--border);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     width: 100%;
@@ -25,6 +35,7 @@
     color: var(--text);
     opacity: 0.8;
     margin-bottom: 2rem;
+    line-height: 1.2;
 }
 
 .pin-wrapper {
@@ -61,7 +72,7 @@
 }
 
 .attempts-remaining {
-    color: var(--danger-color);
+    color: var(--danger, var(--danger-color, #ef4444));
     font-size: 0.9rem;
     font-weight: 600;
     background: rgba(239, 68, 68, 0.08);
@@ -71,7 +82,7 @@
 }
 
 .lockout-notice {
-    color: var(--danger-color);
+    color: var(--danger, var(--danger-color, #ef4444));
     font-size: 0.95rem;
     font-weight: 600;
     background: rgba(239, 68, 68, 0.08);
@@ -81,7 +92,7 @@
 }
 
 .pin-error {
-    color: var(--danger-color);
+    color: var(--danger, var(--danger-color, #ef4444));
     font-size: 0.9rem;
     font-weight: 500;
 }
