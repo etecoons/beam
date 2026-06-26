@@ -70,6 +70,8 @@
           doCheck = false;
 
           buildPhase = ''
+            mkdir -p frontend/Assets/shared-assets
+            cp -r ${shared-assets}/* frontend/Assets/shared-assets/
             cargo build --release --bin backend --bin sh
           '';
 
