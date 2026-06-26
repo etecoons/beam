@@ -84,6 +84,8 @@ struct FrontendConfig {
     enable_translation: bool,
     enable_themes: bool,
     enable_print: bool,
+    show_version: bool,
+    show_github: bool,
 }
 
 pub fn router() -> Router<crate::AppState> {
@@ -106,6 +108,8 @@ async fn get_config(State(config): State<Arc<AppConfig>>) -> Json<FrontendConfig
         enable_translation: config.enable_translation,
         enable_themes: config.enable_themes,
         enable_print: config.enable_print,
+        show_version: config.show_version,
+        show_github: config.show_github,
     })
 }
 

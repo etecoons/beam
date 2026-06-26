@@ -21,6 +21,10 @@ impl App {
             .map(|c| c.pin_required)
             .unwrap_or(false);
 
+        let show_version = self.config.as_ref().map(|c| c.show_version).unwrap_or(true);
+        let show_github = self.config.as_ref().map(|c| c.show_github).unwrap_or(true);
+        let version = env!("CARGO_PKG_VERSION").to_string();
+
         html! {
             <>
                 <crate::header::Header
@@ -116,7 +120,7 @@ impl App {
                 }}
 
             </div>
-            <footer class="layout-footer">
+            <crate::footer::Footer {show_version} {version} {show_github}>
                 {
                     if let Some((msg, cls)) = &self.active_notification {
                         html! { <div class={format!("footer-status-text {}", cls)}>{ msg }</div> }
@@ -124,7 +128,7 @@ impl App {
                         html! { <div class="footer-status-text success">{"Ready"}</div> }
                     }
                 }
-            </footer>
+            </crate::footer::Footer>
             </>
         }
     }

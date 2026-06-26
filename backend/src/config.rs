@@ -22,6 +22,8 @@ pub struct AppConfig {
     pub enable_translation: bool,
     pub enable_themes: bool,
     pub enable_print: bool,
+    pub show_version: bool,
+    pub show_github: bool,
 }
 
 impl AppConfig {
@@ -135,6 +137,14 @@ impl AppConfig {
             .map(|v| v == "true" || v == "on")
             .unwrap_or(false);
 
+        let show_version = env::var("SHOW_VERSION")
+            .map(|v| v != "false" && v != "off")
+            .unwrap_or(true);
+
+        let show_github = env::var("SHOW_GITHUB")
+            .map(|v| v != "false" && v != "off")
+            .unwrap_or(true);
+
         Self {
             port,
             node_env,
@@ -155,6 +165,8 @@ impl AppConfig {
             enable_translation,
             enable_themes,
             enable_print,
+            show_version,
+            show_github,
         }
     }
 }

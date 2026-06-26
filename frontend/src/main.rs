@@ -15,6 +15,7 @@
 mod api;
 mod app;
 mod header;
+mod footer;
 mod i18n;
 mod js_api;
 mod storage;
