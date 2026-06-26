@@ -24,6 +24,7 @@ impl App {
         let show_version = self.config.as_ref().map(|c| c.show_version).unwrap_or(true);
         let show_github = self.config.as_ref().map(|c| c.show_github).unwrap_or(true);
         let version = env!("CARGO_PKG_VERSION").to_string();
+        let version_url = format!("https://github.com/UberMetroid/beam/releases/tag/v{}", version);
 
         html! {
             <>
@@ -120,7 +121,7 @@ impl App {
                 }}
 
             </div>
-            <crate::footer::Footer {show_version} {version} {show_github}>
+            <crate::footer::Footer {show_version} {version} {show_github} {version_url}>
                 {
                     if let Some((msg, cls)) = &self.active_notification {
                         html! { <div class={format!("footer-status-text {}", cls)}>{ msg }</div> }
