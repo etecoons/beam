@@ -5,9 +5,13 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     rust-overlay.url = "github:oxalica/rust-overlay";
     flake-utils.url = "github:numtide/flake-utils";
+    shared-assets = {
+      url = "github:UberMetroid/shared-assets";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, rust-overlay, flake-utils, ... }:
+  outputs = { self, nixpkgs, rust-overlay, flake-utils, shared-assets, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         overlays = [ (import rust-overlay) ];
@@ -38,6 +42,8 @@
 
           buildPhase = ''
             export HOME=$TMPDIR
+            mkdir -p frontend/Assets/shared-assets
+            cp -r ${shared-assets}/* frontend/Assets/shared-assets/
             cd frontend
             trunk build --release
           '';
