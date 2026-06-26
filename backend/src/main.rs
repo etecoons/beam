@@ -186,6 +186,7 @@ async fn main() {
 
     let app = Router::new()
         .nest("/api", api_routes)
+        .route("/health", get(serve_health))
         .route("/", get(serve_index))
         .route("/index.html", get(serve_index))
         .route("/login.html", get(serve_login))
@@ -347,4 +348,15 @@ async fn hsts_middleware(
     }
 
     response
+}
+
+async fn serve_health() -> impl IntoResponse {
+    let secs = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    axum::Json(serde_json::json!({
+        "status": "ok",
+        "timestamp": secs
+    }))
 }

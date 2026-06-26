@@ -46,4 +46,7 @@ USER 99:100
 
 EXPOSE 4401
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s CMD wget -qO- http://localhost:4401/health || exit 1
+
 CMD ["./beam"]
