@@ -4,7 +4,19 @@
   <img src="https://raw.githubusercontent.com/UberMetroid/beam/main/frontend/Assets/assets/icon.png" alt="Beam Logo" width="128" height="128">
 </p>
 
-Beam is a lightweight, self-hosted, and high-performance file sharing web application. It features a modern, drag-and-drop web interface for uploading files and folders while maintaining their directory structures, built with a Rust (Axum/Tokio) backend and a WebAssembly (Yew) frontend.
+Beam is a lightweight, self-hosted, and high-performance file sharing web application. It features a modern, drag-and-drop web interface for uploading files and folders while maintaining their directory structures. Built with a high-performance Rust (Axum/Tokio) backend and a WebAssembly (Yew) frontend.
+
+---
+
+## ⚡ Key Features
+
+*   **Zebes Themes**: High-quality UI styling options based on the 6 classic Super Metroid regions (Crateria, Brinstar, Norfair, Wrecked Ship, Maridia, Tourian).
+*   **Access PIN Security**: Lock down the interface with an optional numerical PIN for absolute privacy.
+*   **Internationalization**: Built-in multilingual translation selector support.
+*   **Print Optimization**: Customized print stylesheet layout and print header action button.
+*   **Performance First**: Tiny resource footprint, zero external JS engine dependencies, and rapid page load speeds.
+*   **Drag-and-Drop Uploads**: Upload files and complete folder structures seamlessly while preserving directory layouts.
+*   **Quota & Retention**: Configurable total storage limits and automatic age-based file purges.
 
 ---
 
