@@ -1,6 +1,6 @@
 [package]
 name = "frontend"
-version = "2.0.0"
+version = "2.1.1"
 edition = "2024"
 authors = ["UberMetroid <admin@ubermetroid.com>"]
 license = "Apache-2.0"

@@ -109,7 +109,7 @@ dependencies = [
 
 [[package]]
 name = "backend"
-version = "2.0.0"
+version = "2.1.1"
 dependencies = [
  "axum",
  "axum-extra",
@@ -311,7 +311,7 @@ dependencies = [
 
 [[package]]
 name = "frontend"
-version = "2.0.0"
+version = "2.1.1"
 dependencies = [
  "gloo-net 0.7.0",
  "gloo-timers 0.4.0",
@@ -1232,7 +1232,7 @@ dependencies = [
 
 [[package]]
 name = "shared-assets"
-version = "2.0.0"
+version = "2.1.1"
 
 [[package]]
 name = "shlex"
