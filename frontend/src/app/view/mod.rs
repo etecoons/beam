@@ -36,7 +36,7 @@ impl App {
                     disable_print={self.uploaded_files.as_ref().map(|f| f.items.is_empty()).unwrap_or(true)}
                     enable_translation={self.config.as_ref().map(|c| c.enable_translation).unwrap_or(false)}
                     enable_themes={self.config.as_ref().map(|c| c.enable_themes).unwrap_or(true)}
-                    enable_print={self.config.as_ref().map(|c| c.enable_print).unwrap_or(true)}
+                    enable_print={self.config.as_ref().map(|c| c.enable_print).unwrap_or(false)}
                 />
                 <div class="container">
                     {if !self.is_authenticated {
