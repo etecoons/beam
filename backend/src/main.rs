@@ -1,157 +1,119 @@
 mod config;
+mod pwa;
 mod routes;
 mod security;
+mod state;
+mod static_files;
 #[cfg(test)]
 mod tests;
 mod utils;
 
-use axum::http::StatusCode;
+use axum::http::header::HeaderValue;
+use axum::response::IntoResponse;
 use axum::{
     Extension, Router,
-    extract::{FromRef, State},
-    response::{IntoResponse, Redirect, Response},
+    extract::State,
     routing::get,
 };
-use std::fs;
 use std::path::Path;
 use std::sync::Arc;
-use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, Layer};
 
 use crate::config::AppConfig;
+use crate::pwa::generate_pwa_manifest;
 use crate::routes::upload::{UploadState, start_batch_cleanup};
 use crate::security::security_headers_middleware;
+use crate::state::AppState;
+use crate::static_files::{serve_health, serve_html, serve_index, serve_login};
 
-#[derive(Clone)]
-pub struct AppState {
-    pub config: Arc<AppConfig>,
-    pub upload: Arc<UploadState>,
-    pub active_sessions: Arc<tokio::sync::RwLock<std::collections::HashSet<String>>>,
-    pub rate_limiter: Arc<
-        tokio::sync::RwLock<std::collections::HashMap<std::net::IpAddr, Vec<std::time::Instant>>>,
-    >,
-}
-
-impl AppState {
-    pub async fn check_rate_limit(&self, ip: std::net::IpAddr) -> bool {
-        let max_requests = 100;
-        let window = std::time::Duration::from_secs(60);
-        let now = std::time::Instant::now();
-
-        let mut map = self.rate_limiter.write().await;
-        let timestamps = map.entry(ip).or_insert_with(Vec::new);
-
-        timestamps.retain(|&t| now.duration_since(t) < window);
-
-        if timestamps.len() >= max_requests {
-            false
-        } else {
-            timestamps.push(now);
-            true
-        }
-    }
-
-    pub async fn clean_old_rate_limits(&self) {
-        let window = std::time::Duration::from_secs(60);
-        let now = std::time::Instant::now();
-        let mut map = self.rate_limiter.write().await;
-        map.retain(|_, timestamps| {
-            timestamps.retain(|&t| now.duration_since(t) < window);
-            !timestamps.is_empty()
-        });
-    }
-}
-
-impl FromRef<AppState> for Arc<AppConfig> {
-    fn from_ref(state: &AppState) -> Self {
-        state.config.clone()
-    }
-}
-
-impl FromRef<AppState> for Arc<UploadState> {
-    fn from_ref(state: &AppState) -> Self {
-        state.upload.clone()
-    }
-}
-
+/// Server entry point.
 #[tokio::main]
 async fn main() {
+    init_tracing();
+    let config = Arc::new(AppConfig::load());
+    let upload_state = Arc::new(UploadState::new());
+    let app_state = AppState {
+        config: config.clone(),
+        upload: upload_state.clone(),
+        active_sessions: Arc::new(Default::default()),
+        rate_limiter: Arc::new(Default::default()),
+    };
+
+    spawn_rate_limit_cleaner(app_state.clone());
+    bootstrap_directories(config.upload_dir.as_path());
+    start_batch_cleanup(config.clone(), upload_state.clone());
+    generate_pwa_manifest(&config);
+
+    let app = build_router(config.clone(), app_state);
+    run_server(config.server.port, app).await;
+}
+
+/// Install the global tracing subscriber (stdout + optional file logging).
+fn init_tracing() {
     let log_dir = std::env::var("LOG_DIR").ok().or_else(|| {
-        let data_dir = std::path::Path::new("/app/data");
-        if data_dir.is_dir() {
+        if Path::new("/app/data").is_dir() {
             Some("/app/data/log".to_string())
         } else {
             Some("/app/log".to_string())
         }
     });
 
-    let (file_layer_error, file_layer_app) = if let Some(ref dir) = log_dir {
-        if dir == "off" || dir == "none" || dir == "false" {
-            (None, None)
-        } else {
-            let _ = std::fs::create_dir_all(dir);
-            let error_file = std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(std::path::Path::new(dir).join("error.log"))
-                .ok();
-            let app_file = std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(std::path::Path::new(dir).join("app.log"))
-                .ok();
-
-            let error_layer = error_file.map(|file| {
+    let (file_err, file_app) = match log_dir.as_deref() {
+        Some(d) if !matches!(d, "off" | "none" | "false") => {
+            let _ = std::fs::create_dir_all(d);
+            let open = |name: &str| {
+                std::fs::OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(Path::new(d).join(name))
+                    .ok()
+            };
+            let err = open("error.log").map(|f| {
                 tracing_subscriber::fmt::layer()
-                    .with_writer(std::sync::Mutex::new(file))
+                    .with_writer(std::sync::Mutex::new(f))
                     .with_ansi(false)
                     .with_filter(tracing_subscriber::filter::LevelFilter::WARN)
             });
-
-            let app_layer = app_file.map(|file| {
+            let app = open("app.log").map(|f| {
                 tracing_subscriber::fmt::layer()
-                    .with_writer(std::sync::Mutex::new(file))
+                    .with_writer(std::sync::Mutex::new(f))
                     .with_ansi(false)
                     .with_filter(tracing_subscriber::filter::LevelFilter::INFO)
             });
-
-            (error_layer, app_layer)
+            (err, app)
         }
-    } else {
-        (None, None)
+        _ => (None, None),
     };
 
     tracing_subscriber::registry()
         .with(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "info".into()),
         )
         .with(tracing_subscriber::fmt::layer())
-        .with(file_layer_error)
-        .with(file_layer_app)
+        .with(file_err)
+        .with(file_app)
         .init();
+}
 
-    let config = Arc::new(AppConfig::load());
-    let upload_state = Arc::new(UploadState::new());
-    let app_state = AppState {
-        config: config.clone(),
-        upload: upload_state.clone(),
-        active_sessions: Arc::new(tokio::sync::RwLock::new(std::collections::HashSet::new())),
-        rate_limiter: Arc::new(tokio::sync::RwLock::new(std::collections::HashMap::new())),
-    };
+/// Ensure upload dir + metadata subdir exist.
+fn bootstrap_directories(upload_dir: &Path) {
+    let _ = std::fs::create_dir_all(upload_dir);
+    let _ = std::fs::create_dir_all(upload_dir.join(".metadata"));
+}
 
-    let state_clone = app_state.clone();
+/// Spawn the periodic rate-limit GC task.
+fn spawn_rate_limit_cleaner(state: AppState) {
     tokio::spawn(async move {
         loop {
             tokio::time::sleep(std::time::Duration::from_secs(60)).await;
-            state_clone.clean_old_rate_limits().await;
+            state.clean_old_rate_limits().await;
         }
     });
+}
 
-    let _ = fs::create_dir_all(&config.upload_dir);
-    let _ = fs::create_dir_all(config.upload_dir.join(".metadata"));
-    start_batch_cleanup(config.clone(), upload_state.clone());
-
-    generate_pwa_manifest(&config);
-
+/// Compose the full axum router with CORS / HSTS / security middleware.
+fn build_router(config: Arc<AppConfig>, app_state: AppState) -> Router {
     let api_routes = Router::new()
         .nest("/auth", crate::routes::auth::router())
         .nest("/upload", crate::routes::upload::router())
@@ -161,30 +123,9 @@ async fn main() {
             crate::routes::auth::rate_limit_middleware,
         ));
 
-    let cors = if config.server.allowed_origins == "*" {
-        tower_http::cors::CorsLayer::permissive()
-    } else {
-        let mut cors = tower_http::cors::CorsLayer::new()
-            .allow_methods([
-                axum::http::Method::GET,
-                axum::http::Method::POST,
-                axum::http::Method::PUT,
-                axum::http::Method::DELETE,
-            ])
-            .allow_headers([
-                axum::http::header::CONTENT_TYPE,
-                axum::http::header::COOKIE,
-                axum::http::header::HeaderName::from_static("x-pin"),
-            ]);
-        for origin in config.server.allowed_origins.split(',') {
-            if let Ok(parsed) = origin.trim().parse::<axum::http::HeaderValue>() {
-                cors = cors.allow_origin(parsed);
-            }
-        }
-        cors.allow_credentials(true)
-    };
+    let cors = build_cors(&config.server.allowed_origins);
 
-    let app = Router::new()
+    Router::new()
         .nest("/api", api_routes)
         .route("/health", get(serve_health))
         .route("/", get(serve_index))
@@ -199,133 +140,51 @@ async fn main() {
         .layer(cors)
         .layer(axum::middleware::from_fn(security_headers_middleware))
         .layer(Extension(config.clone()))
-        .with_state(app_state);
-
-    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], config.server.port));
-    tracing::info!("Beam server running on {}", config.server.base_url);
-    tracing::info!("Listening on {}", addr);
-
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(
-        listener,
-        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
-    )
-    .await
-    .unwrap();
+        .with_state(app_state)
 }
 
-async fn serve_index(State(config): State<Arc<AppConfig>>) -> impl IntoResponse {
-    serve_html(config, "index.html").await.into_response()
-}
+/// CORS layer built from `ALLOWED_ORIGINS`. `"*"` = permissive.
+fn build_cors(allowed_origins: &str) -> tower_http::cors::CorsLayer {
+    use axum::http::{header, Method};
+    use tower_http::cors::CorsLayer;
+    let methods = [
+        Method::GET,
+        Method::POST,
+        Method::PUT,
+        Method::DELETE,
+    ];
+    let headers = [
+        header::CONTENT_TYPE,
+        header::COOKIE,
+        header::HeaderName::from_static("x-pin"),
+    ];
 
-async fn serve_login() -> impl IntoResponse {
-    Redirect::temporary("/")
-}
-
-async fn serve_html(config: Arc<AppConfig>, req_path: &str) -> Response {
-    let file_path = Path::new("frontend/dist/index.html");
-    let content = match tokio::fs::read_to_string(&file_path).await {
-        Ok(c) => c,
-        Err(_) => return StatusCode::NOT_FOUND.into_response(),
-    };
-
-    let base_url_with_slash = if config.server.base_url.ends_with('/') {
-        config.server.base_url.clone()
-    } else {
-        format!("{}/", config.server.base_url)
-    };
-
-    let mut rendered = content
-        .replace("{{SITE_TITLE}}", &config.server.site_title)
-        .replace("{{BASE_URL}}", &base_url_with_slash);
-
-    if req_path == "index.html" {
-        rendered = rendered
-            .replace("{{AUTO_UPLOAD}}", &config.auto_upload.to_string())
-            .replace("{{MAX_RETRIES}}", &config.client_max_retries.to_string())
-            .replace("{{SHOW_FILE_LIST}}", &config.show_file_list.to_string());
+    if allowed_origins.trim() == "*" {
+        return CorsLayer::permissive();
     }
 
-    let mut response = axum::response::Html(rendered).into_response();
-    if req_path == "login.html" {
-        let headers = response.headers_mut();
-        headers.insert(
-            axum::http::header::CACHE_CONTROL,
-            axum::http::HeaderValue::from_static("no-store, no-cache, must-revalidate, private"),
-        );
-        headers.insert(
-            axum::http::header::PRAGMA,
-            axum::http::HeaderValue::from_static("no-cache"),
-        );
-        headers.insert(
-            axum::http::header::EXPIRES,
-            axum::http::HeaderValue::from_static("0"),
-        );
-    }
-    response
-}
-
-fn generate_pwa_manifest(config: &AppConfig) {
-    let mut manifest_assets = Vec::new();
-    fn walk_dir(dir: &Path, base: &str, assets: &mut Vec<String>) {
-        if let Ok(entries) = fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let name = entry.file_name().to_string_lossy().to_string();
-                let full = entry.path();
-                let rel = if base.is_empty() {
-                    name.clone()
-                } else {
-                    format!("{}/{}", base, name)
-                };
-                if full.is_dir() {
-                    walk_dir(&full, &rel, assets);
-                } else {
-                    assets.push(format!("/{}", rel));
-                }
-            }
+    let mut layer = CorsLayer::new()
+        .allow_methods(methods)
+        .allow_headers(headers)
+        .allow_credentials(true);
+    for origin in allowed_origins.split(',') {
+        if let Ok(parsed) = header::HeaderValue::from_str(origin.trim()) {
+            layer = layer.allow_origin(parsed);
         }
     }
-    walk_dir(Path::new("frontend/dist"), "", &mut manifest_assets);
-
-    let asset_path = Path::new("frontend/dist/asset-manifest.json");
-    if let Ok(json) = serde_json::to_string_pretty(&manifest_assets) {
-        let _ = fs::write(asset_path, json);
-    }
-
-    let pwa_manifest = serde_json::json!({
-        "name": &config.server.site_title,
-        "short_name": &config.server.site_title,
-        "description": "A simple file upload application",
-        "start_url": "/",
-        "display": "standalone",
-        "background_color": "#ffffff",
-        "theme_color": "#000000",
-        "icons": [
-            {
-                "src": "favicon.svg",
-                "type": "image/svg+xml",
-                "sizes": "any"
-            },
-            {
-                "src": "favicon.png",
-                "type": "image/png",
-                "sizes": "192x192"
-            },
-            {
-                "src": "favicon.png",
-                "type": "image/png",
-                "sizes": "512x512"
-            }
-        ],
-        "orientation": "any"
-    });
-
-    let pwa_path = Path::new("frontend/dist/manifest.json");
-    if let Ok(json) = serde_json::to_string_pretty(&pwa_manifest) {
-        let _ = fs::write(pwa_path, json);
-    }
+    layer
 }
 
+/// Bind and serve with graceful shutdown on SIGINT/SIGTERM.
+async fn run_server(port: u16, app: Router) {
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
+    tracing::info!(target: "bootstrap", "listening on {addr}");
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    let svc = app.into_make_service_with_connect_info::<std::net::SocketAddr>();
+    axum::serve(listener, svc).await.unwrap();
+}
+
+/// HSTS middleware: emit Strict-Transport-Security when the connection is HTTPS.
 async fn hsts_middleware(
     State(config): State<Arc<AppConfig>>,
     headers: axum::http::HeaderMap,
@@ -339,24 +198,11 @@ async fn hsts_middleware(
         .unwrap_or_else(|| config.server.base_url.starts_with("https"));
 
     let mut response = next.run(request).await;
-
     if is_secure {
         response.headers_mut().insert(
             axum::http::header::STRICT_TRANSPORT_SECURITY,
-            axum::http::HeaderValue::from_static("max-age=31536000; includeSubDomains"),
+            HeaderValue::from_static("max-age=31536000; includeSubDomains"),
         );
     }
-
     response
-}
-
-async fn serve_health() -> impl IntoResponse {
-    let secs = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs();
-    axum::Json(serde_json::json!({
-        "status": "ok",
-        "timestamp": secs
-    }))
 }
