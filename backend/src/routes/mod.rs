@@ -23,3 +23,4 @@
 pub mod auth;
 pub mod files;
 pub mod upload;
+pub mod verify_pin;

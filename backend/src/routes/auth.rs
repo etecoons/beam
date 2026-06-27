@@ -59,17 +59,17 @@ where
 
 // Request payload for PIN verification
 #[derive(Deserialize)]
-struct VerifyPinPayload {
-    pin: Option<String>,
+pub struct VerifyPinPayload {
+    pub pin: Option<String>,
 }
 
 // Response payload for PIN verification
 #[derive(Serialize)]
-struct VerifyPinResponse {
-    success: bool,
-    error: Option<String>,
+pub struct VerifyPinResponse {
+    pub success: bool,
+    pub error: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    path: Option<String>,
+    pub path: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -91,7 +91,7 @@ struct FrontendConfig {
 pub fn router() -> Router<crate::AppState> {
     Router::new()
         .route("/pin-required", get(pin_required))
-        .route("/verify-pin", post(verify_pin))
+        .route("/verify-pin", post(crate::routes::verify_pin::verify_pin))
         .route("/logout", post(logout))
         .route("/config", get(get_config))
 }
@@ -122,140 +122,6 @@ async fn pin_required(State(config): State<Arc<AppConfig>>) -> Json<serde_json::
         "enable_themes": config.server.enable_themes,
         "enable_print": config.server.enable_print,
     }))
-}
-
-async fn verify_pin(
-    State(state): State<crate::AppState>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    headers: HeaderMap,
-    jar: CookieJar,
-    Json(payload): Json<VerifyPinPayload>,
-) -> impl IntoResponse {
-    let config = &state.config;
-    let ip = get_client_ip(
-        &headers,
-        addr,
-        config.trust_proxy,
-        config.trusted_proxy_ips.as_deref(),
-    );
-
-    // 1. If PIN is not set in config, clear cookie and return success
-    let Some(ref config_pin) = config.server.pin else {
-        let new_jar = jar.add(Cookie::build(("BEAM_PIN", "")).path("/").build());
-        let res = (
-            StatusCode::OK,
-            Json(VerifyPinResponse {
-                success: true,
-                error: None,
-                path: Some("/".to_string()),
-            }),
-        )
-            .into_response();
-        return (new_jar, res).into_response();
-    };
-
-    // 2. Validate empty/missing PIN (returns 400)
-    let pin_str = payload.pin.as_deref().unwrap_or("").trim();
-    if pin_str.is_empty() {
-        let res = (
-            StatusCode::BAD_REQUEST,
-            Json(VerifyPinResponse {
-                success: false,
-                error: Some("PIN is required.".to_string()),
-                path: None,
-            }),
-        )
-            .into_response();
-        return (jar, res).into_response();
-    }
-
-    // 3. Check for lockout
-    if is_locked_out(&ip) {
-        let _ = record_attempt(&ip);
-        let time_left = get_lockout_time_remaining(&ip);
-        let minutes_left = (time_left as f64 / 60.0).ceil() as u64;
-
-        tracing::warn!("Login attempt from locked out IP: {}", ip);
-        let res = (
-            StatusCode::TOO_MANY_REQUESTS,
-            Json(VerifyPinResponse {
-                success: false,
-                error: Some(format!(
-                    "Too many PIN verification attempts. Please try again in {} minutes.",
-                    minutes_left
-                )),
-                path: None,
-            }),
-        )
-            .into_response();
-        return (jar, res).into_response();
-    }
-
-    // 4. Verify PIN
-    if safe_compare(pin_str, config_pin) {
-        reset_attempts(&ip);
-
-        let is_secure = headers
-            .get("x-forwarded-proto")
-            .and_then(|v| v.to_str().ok())
-            .map(|v| v.eq_ignore_ascii_case("https"))
-            .unwrap_or_else(|| config.server.base_url.starts_with("https"));
-
-        let session_id = generate_session_id();
-        state
-            .active_sessions
-            .write()
-            .await
-            .insert(session_id.clone());
-
-        // Build secure cookie
-        let secure_cookie = Cookie::build(("BEAM_PIN", session_id))
-            .http_only(true)
-            .secure(is_secure)
-            .same_site(SameSite::Lax)
-            .path("/")
-            .build();
-
-        let new_jar = jar.add(secure_cookie);
-
-        tracing::info!("Successful PIN verification from IP: {}", ip);
-        let res = (
-            StatusCode::OK,
-            Json(VerifyPinResponse {
-                success: true,
-                error: None,
-                path: None,
-            }),
-        )
-            .into_response();
-        (new_jar, res).into_response()
-    } else {
-        // Record failed attempt
-        let attempt = record_attempt(&ip);
-        let attempts_left = get_max_attempts().saturating_sub(attempt.count);
-
-        let error_msg = if attempts_left > 0 {
-            format!("Invalid PIN. {} attempts remaining.", attempts_left)
-        } else {
-            "Too many PIN verification attempts. Account locked for 15 minutes.".to_string()
-        };
-
-        tracing::warn!(
-            "Failed PIN verification from IP: {} ({} attempts remaining)",
-            ip,
-            attempts_left
-        );
-        let res = (
-            StatusCode::UNAUTHORIZED,
-            Json(VerifyPinResponse {
-                success: false,
-                error: Some(error_msg),
-                path: None,
-            }),
-        )
-            .into_response();
-        (jar, res).into_response()
-    }
 }
 
 async fn logout(State(state): State<crate::AppState>, jar: CookieJar) -> impl IntoResponse {
