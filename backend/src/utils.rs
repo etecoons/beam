@@ -33,6 +33,21 @@ pub fn normalize_path(path: &Path) -> PathBuf {
     ret
 }
 
+/// Returns `true` if `file_path` (after canonicalization) lives inside
+/// `upload_dir`.
+///
+/// Canonicalization is the only sound defense against symlink-based path
+/// traversal: a string-level check of `..` is insufficient because a
+/// symlink in the upload dir that points outside (e.g. `/uploads/escape ->
+/// /etc`) would otherwise pass parent-based containment checks while the
+/// kernel follows the symlink at write time.
+///
+/// For non-existent targets (e.g. an in-progress upload), we walk the path
+/// component by component, canonicalize the deepest EXISTING ancestor, then
+/// re-attach the non-existent suffix. Any `..` component in the input is
+/// rejected as a traversal attempt (caller-side sanitization is the right
+/// place to normalize `..`, not here).
+#[must_use]
 pub fn is_path_within_upload_dir(
     file_path: &Path,
     upload_dir: &Path,
@@ -43,36 +58,96 @@ pub fn is_path_within_upload_dir(
         Err(_) => return false,
     };
 
-    let resolved_file_path = if require_exists {
+    if require_exists {
         if !file_path.exists() {
             return false;
         }
-        match fs::canonicalize(file_path) {
-            Ok(p) => p,
-            Err(_) => return false,
-        }
-    } else {
-        if let Some(parent) = file_path.parent()
-            && parent.exists()
-        {
-            match fs::canonicalize(parent) {
-                Ok(p) => {
-                    if !p.starts_with(&real_upload_dir) {
-                        return false;
-                    }
-                }
-                Err(_) => return false,
-            }
-        }
-        let absolute_path = if file_path.is_absolute() {
-            file_path.to_path_buf()
-        } else {
-            std::env::current_dir().unwrap_or_default().join(file_path)
+        return match fs::canonicalize(file_path) {
+            Ok(p) => p.starts_with(&real_upload_dir),
+            Err(_) => false,
         };
-        normalize_path(&absolute_path)
+    }
+
+    // Non-existent target. Reject any `..` component as a traversal signal
+    // before walking — the caller should have normalized the path through
+    // `sanitize_path_preserve_dirs_safe` already, which removes `..`. A
+    // `..` slipping through is a security incident.
+    if file_path
+        .components()
+        .any(|c| matches!(c, Component::ParentDir))
+    {
+        return false;
+    }
+
+    // Make the path absolute relative to the upload dir's parent. This
+    // handles both relative `file_path` (interpreted under CWD) and
+    // absolute `file_path` (used as-is).
+    let absolute_path = if file_path.is_absolute() {
+        file_path.to_path_buf()
+    } else {
+        std::env::current_dir().unwrap_or_default().join(file_path)
     };
 
-    resolved_file_path.starts_with(real_upload_dir)
+    // Walk component-by-component, canonicalize the deepest existing
+    // ancestor, re-attach the non-existent suffix.
+    //
+    // The key insight: for each `Normal(c)` component, we check whether
+    // `existing.join(c)` exists on disk. If yes, we extend `existing`. If
+    // no, we push `c` to the suffix. This way we always end up with the
+    // DEEPEST existing ancestor in `existing` and the rest in `suffix`.
+    let mut existing = PathBuf::new();
+    let mut suffix = PathBuf::new();
+    for component in absolute_path.components() {
+        match component {
+            Component::Prefix(p) => {
+                existing = PathBuf::from(p.as_os_str());
+            }
+            Component::RootDir => {
+                existing = PathBuf::from(std::path::MAIN_SEPARATOR.to_string());
+            }
+            Component::CurDir => {
+                // Skip "." silently.
+            }
+            Component::ParentDir => {
+                // Already filtered above.
+                unreachable!("filtered above");
+            }
+            Component::Normal(c) => {
+                let candidate = existing.join(c);
+                if candidate.exists() {
+                    existing = candidate;
+                } else {
+                    suffix.push(c);
+                }
+            }
+        }
+    }
+
+    // If nothing on the path exists, fall back to a string-level
+    // containment check on the normalized path. This handles the
+    // edge case where the upload dir itself doesn't exist yet (e.g.
+    // bootstrap) but the user is supplying a relative path under it.
+    if suffix == existing || existing.as_os_str().is_empty() {
+        return normalize_path(&absolute_path).starts_with(&real_upload_dir);
+    }
+
+    let canonical_existing = match fs::canonicalize(&existing) {
+        Ok(p) => p,
+        Err(_) => return false,
+    };
+
+    // The deepest existing ancestor must be the upload dir itself or a
+    // descendant of it. If it's an ancestor (e.g. /tmp when the upload
+    // dir is /tmp/beam_test_X), that means the upload dir doesn't
+    // exist — but the user is trying to write to a path under it. We
+    // still allow this as long as the candidate (existing + suffix) is
+    // under real_upload_dir.
+    if !canonical_existing.starts_with(&real_upload_dir) {
+        return false;
+    }
+
+    let candidate = canonical_existing.join(&suffix);
+    candidate.starts_with(&real_upload_dir)
 }
 
 pub fn sanitize_filename_safe(filename: &str) -> String {
@@ -145,6 +220,17 @@ pub fn sanitize_filename_safe(filename: &str) -> String {
 
 pub fn sanitize_path_preserve_dirs_safe(file_path: &str) -> String {
     if file_path.is_empty() {
+        return "unnamed_file.txt".to_string();
+    }
+
+    // Defense in depth: any `..` component (whether encoded, escaped, or
+    // inline) is a path-traversal attempt and must be rejected outright.
+    // The caller should treat the resulting name as the FINAL safe value;
+    // a `..` slipping through here is a security incident.
+    if file_path.split(['/', '\\']).any(|p| p == "..") {
+        tracing::warn!(
+            "sanitize_path_preserve_dirs_safe: rejected path containing '..': {file_path}"
+        );
         return "unnamed_file.txt".to_string();
     }
 

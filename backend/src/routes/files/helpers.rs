@@ -132,6 +132,24 @@ pub fn count_files(items: &[FileItem]) -> u64 {
         .sum()
 }
 
+/// Extensions that can be rendered by the browser and would lead to stored
+/// XSS if served with their native content type. We override these to
+/// `application/octet-stream` and force `Content-Disposition: attachment`
+/// so the browser downloads the file rather than rendering it.
+const DANGEROUS_EXTENSIONS: &[&str] = &[
+    "html", "htm", "svg", "mht", "mhtml",
+    "xhtml", "xht",
+    "js", "mjs", "jsx", "ts", "tsx",
+    "xml", "xsl", "xslt", "rss", "atom",
+    "pdf",  // downloaded by default for safety (could be inline-rendered with a viewer)
+    "swf",
+    "html5",
+];
+
+pub fn is_dangerous_extension(ext: &str) -> bool {
+    DANGEROUS_EXTENSIONS.contains(&ext.to_ascii_lowercase().as_str())
+}
+
 pub fn create_safe_content_disposition(filename: &str) -> String {
     let basename = StdPath::new(filename)
         .file_name()
@@ -149,11 +167,15 @@ pub fn create_safe_content_disposition(filename: &str) -> String {
         })
         .collect();
 
+    // Always force `attachment` so the browser downloads rather than
+    // rendering. This is the defense against stored XSS via uploaded files:
+    // even if `get_content_type` returns a renderable type (e.g. `image/png`
+    // for a polyglot), the browser will not navigate to it inline.
     let is_ascii_printable = sanitized.chars().all(|c| (' '..='~').contains(&c));
 
     if is_ascii_printable {
         let escaped = sanitized.replace('\\', "\\\\").replace('"', "\\\"");
-        format!("inline; filename=\"{}\"", escaped)
+        format!("attachment; filename=\"{}\"", escaped)
     } else {
         let encoded =
             percent_encoding::utf8_percent_encode(&sanitized, percent_encoding::NON_ALPHANUMERIC)
@@ -163,7 +185,7 @@ pub fn create_safe_content_disposition(filename: &str) -> String {
             .map(|c| if (' '..='~').contains(&c) { c } else { '_' })
             .collect();
         format!(
-            "inline; filename=\"{}\"; filename*=UTF-8''{}",
+            "attachment; filename=\"{}\"; filename*=UTF-8''{}",
             ascii_safe, encoded
         )
     }
@@ -176,23 +198,94 @@ pub fn get_content_type(filename: &str) -> &'static str {
         .map(|e| e.to_lowercase())
         .unwrap_or_default();
 
+    // Defense in depth: dangerous extensions always get octet-stream, even
+    // if a future match arm tries to give them a renderable type. See
+    // `create_safe_content_disposition` for the matching Content-Disposition
+    // override.
+    if is_dangerous_extension(&ext) {
+        return "application/octet-stream";
+    }
+
     match ext.as_str() {
         "jpg" | "jpeg" => "image/jpeg",
         "png" => "image/png",
         "gif" => "image/gif",
         "webp" => "image/webp",
-        "svg" => "image/svg+xml",
         "pdf" => "application/pdf",
         "txt" => "text/plain; charset=utf-8",
+        "md" => "text/markdown; charset=utf-8",
         "mp3" => "audio/mpeg",
         "mp4" => "video/mp4",
         "webm" => "video/webm",
         "ogg" => "audio/ogg",
         "wav" => "audio/wav",
-        "html" | "htm" => "text/html",
         "css" => "text/css",
-        "js" => "application/javascript",
         "json" => "application/json",
+        "zip" => "application/zip",
+        "tar" => "application/x-tar",
+        "gz" => "application/gzip",
         _ => "application/octet-stream",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dangerous_extensions_get_octet_stream() {
+        for ext in [
+            "html", "htm", "svg", "xhtml", "xht", "mhtml",
+            "js", "mjs", "xml", "xsl", "pdf",
+        ] {
+            let filename = format!("test.{ext}");
+            assert_eq!(
+                get_content_type(&filename),
+                "application/octet-stream",
+                "extension {ext} should map to octet-stream"
+            );
+        }
+    }
+
+    #[test]
+    fn dangerous_extensions_case_insensitive() {
+        for ext in ["HTML", "Svg", "XHTML", "JS"] {
+            let filename = format!("test.{ext}");
+            assert_eq!(get_content_type(&filename), "application/octet-stream");
+        }
+    }
+
+    #[test]
+    fn safe_image_extensions_keep_their_types() {
+        assert_eq!(get_content_type("photo.jpg"), "image/jpeg");
+        assert_eq!(get_content_type("photo.png"), "image/png");
+        assert_eq!(get_content_type("photo.gif"), "image/gif");
+    }
+
+    #[test]
+    fn unknown_extensions_default_to_octet_stream() {
+        assert_eq!(get_content_type("file.qwxyz"), "application/octet-stream");
+    }
+
+    #[test]
+    fn content_disposition_is_always_attachment() {
+        let d = create_safe_content_disposition("photo.png");
+        assert!(d.starts_with("attachment;"), "got: {d}");
+        assert!(d.contains("photo.png"), "got: {d}");
+    }
+
+    #[test]
+    fn content_disposition_handles_unicode_safely() {
+        let d = create_safe_content_disposition("файл.txt");
+        assert!(d.starts_with("attachment;"));
+        assert!(d.contains("filename*=UTF-8''"), "got: {d}");
+    }
+
+    #[test]
+    fn content_disposition_sanitizes_quotes_and_backslashes() {
+        let d = create_safe_content_disposition("evil\"name\\.txt");
+        assert!(d.starts_with("attachment;"));
+        // Quotes should be escaped or replaced
+        assert!(!d.contains("evil\"name"), "raw quote in disposition: {d}");
     }
 }

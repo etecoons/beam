@@ -8,13 +8,7 @@ mod static_files;
 mod tests;
 mod utils;
 
-use axum::http::header::HeaderValue;
-use axum::response::IntoResponse;
-use axum::{
-    Extension, Router,
-    extract::State,
-    routing::get,
-};
+use axum::{Extension, Router, routing::get};
 use std::path::Path;
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, Layer};
@@ -22,9 +16,12 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, Layer};
 use crate::config::AppConfig;
 use crate::pwa::generate_pwa_manifest;
 use crate::routes::upload::{UploadState, start_batch_cleanup};
-use crate::security::security_headers_middleware;
 use crate::state::AppState;
-use crate::static_files::{serve_health, serve_html, serve_index, serve_login};
+use crate::static_files::{serve_health, serve_index, serve_login};
+
+use shared_assets::middleware::hsts::{HstsState, hsts_layer};
+use shared_assets::middleware::title::{TitleState, title_injection_layer};
+use shared_assets::middleware::{cors_layer, security_headers_layer};
 
 /// Server entry point.
 #[tokio::main]
@@ -113,7 +110,19 @@ fn spawn_rate_limit_cleaner(state: AppState) {
 }
 
 /// Compose the full axum router with CORS / HSTS / security middleware.
+///
+/// All four security layers come from `shared-assets` so that beam stays
+/// aligned with the rest of the portfolio:
+/// - [`cors_layer`] — CORS allowlist, refuses credentials with `*`
+/// - [`security_headers_layer`] — X-Frame-Options, CSP, X-Content-Type-Options
+/// - [`hsts_layer`] — Strict-Transport-Security on HTTPS
+/// - [`title_injection_layer`] — replaces `{{SITE_TITLE}}` in HTML responses
 fn build_router(config: Arc<AppConfig>, app_state: AppState) -> Router {
+    // The shared-assets middleware needs a `&ServerConfig` / `Arc<ServerConfig>`.
+    // Extract it from the app config so the rest of the file can keep using
+    // `Arc<AppConfig>`.
+    let server_config: Arc<shared_assets::server::ServerConfig> = Arc::new(config.server.clone());
+
     let api_routes = Router::new()
         .nest("/auth", crate::routes::auth::router())
         .nest("/upload", crate::routes::upload::router())
@@ -123,7 +132,7 @@ fn build_router(config: Arc<AppConfig>, app_state: AppState) -> Router {
             crate::routes::auth::rate_limit_middleware,
         ));
 
-    let cors = build_cors(&config.server.allowed_origins);
+    let cors = cors_layer(&config.server);
 
     Router::new()
         .nest("/api", api_routes)
@@ -132,47 +141,19 @@ fn build_router(config: Arc<AppConfig>, app_state: AppState) -> Router {
         .route("/index.html", get(serve_index))
         .route("/login.html", get(serve_login))
         .fallback_service(tower_http::services::ServeDir::new("frontend/dist"))
+        .layer(axum::middleware::from_fn(security_headers_layer))
         .layer(axum::middleware::from_fn_with_state(
-            app_state.clone(),
-            hsts_middleware,
+            TitleState(server_config.clone()),
+            title_injection_layer,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            HstsState(server_config.clone()),
+            hsts_layer,
         ))
         .layer(tower_http::trace::TraceLayer::new_for_http())
         .layer(cors)
-        .layer(axum::middleware::from_fn(security_headers_middleware))
         .layer(Extension(config.clone()))
         .with_state(app_state)
-}
-
-/// CORS layer built from `ALLOWED_ORIGINS`. `"*"` = permissive.
-fn build_cors(allowed_origins: &str) -> tower_http::cors::CorsLayer {
-    use axum::http::{header, Method};
-    use tower_http::cors::CorsLayer;
-    let methods = [
-        Method::GET,
-        Method::POST,
-        Method::PUT,
-        Method::DELETE,
-    ];
-    let headers = [
-        header::CONTENT_TYPE,
-        header::COOKIE,
-        header::HeaderName::from_static("x-pin"),
-    ];
-
-    if allowed_origins.trim() == "*" {
-        return CorsLayer::permissive();
-    }
-
-    let mut layer = CorsLayer::new()
-        .allow_methods(methods)
-        .allow_headers(headers)
-        .allow_credentials(true);
-    for origin in allowed_origins.split(',') {
-        if let Ok(parsed) = header::HeaderValue::from_str(origin.trim()) {
-            layer = layer.allow_origin(parsed);
-        }
-    }
-    layer
 }
 
 /// Bind and serve with graceful shutdown on SIGINT/SIGTERM.
@@ -184,25 +165,8 @@ async fn run_server(port: u16, app: Router) {
     axum::serve(listener, svc).await.unwrap();
 }
 
-/// HSTS middleware: emit Strict-Transport-Security when the connection is HTTPS.
-async fn hsts_middleware(
-    State(config): State<Arc<AppConfig>>,
-    headers: axum::http::HeaderMap,
-    request: axum::extract::Request,
-    next: axum::middleware::Next,
-) -> impl IntoResponse {
-    let is_secure = headers
-        .get("x-forwarded-proto")
-        .and_then(|v| v.to_str().ok())
-        .map(|v| v.eq_ignore_ascii_case("https"))
-        .unwrap_or_else(|| config.server.base_url.starts_with("https"));
-
-    let mut response = next.run(request).await;
-    if is_secure {
-        response.headers_mut().insert(
-            axum::http::header::STRICT_TRANSPORT_SECURITY,
-            HeaderValue::from_static("max-age=31536000; includeSubDomains"),
-        );
-    }
-    response
-}
+// `serve_html` lives in `static_files` and is used by `serve_index`. The
+// shared-assets `title_injection_layer` middleware (installed in
+// `build_router` above) handles the simpler `{{SITE_TITLE}}` case for
+// any HTML served by the `ServeDir` fallback (which would otherwise be
+// missed by `serve_index`).

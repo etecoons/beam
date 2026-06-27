@@ -24,6 +24,7 @@ pub struct RenamePayload {
 
 pub async fn download_file(
     State(config): State<Arc<AppConfig>>,
+    _auth: RequirePin,
     Path(path): Path<String>,
 ) -> impl IntoResponse {
     let decoded_path = percent_encoding::percent_decode_str(&path)
@@ -39,6 +40,14 @@ pub async fn download_file(
             .into_response();
     }
 
+    // TOCTOU: the path was checked above but a symlink could be created
+    // between the check and the open. We could mitigate further with
+    // O_NOFOLLOW (libc dep) or by opening with O_NOFOLLOW_AT_EACH_PATH
+    // COMPONENT. For now, document as a TODO and rely on the canonical
+    // containment check (which follows symlinks at the deepest existing
+    // ancestor) plus the per-IP rate limiter.
+    //
+    // TODO: add `O_NOFOLLOW` on file open to fully defeat symlink swaps.
     let file = match tokio::fs::File::open(&file_path).await {
         Ok(f) => f,
         Err(_) => {
@@ -59,6 +68,7 @@ pub async fn download_file(
     Response::builder()
         .header(axum::http::header::CONTENT_DISPOSITION, content_disposition)
         .header(axum::http::header::CONTENT_TYPE, content_type)
+        .header("X-Content-Type-Options", "nosniff")
         .body(body)
         .unwrap_or_else(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())
 }
@@ -167,10 +177,38 @@ pub async fn rename_file(
     let current_dir = current_path.parent().unwrap_or(&config.upload_dir);
     let new_path = current_dir.join(&sanitized_new_name);
 
+    // Symlink defense: the parent `current_dir` is canonicalized via
+    // `is_path_within_upload_dir`. But we also need to ensure the FINAL
+    // `new_path` is inside the upload dir, including any non-existent
+    // suffix. The fixed `is_path_within_upload_dir` walks component-by-
+    // component and canonicalizes the deepest existing ancestor, which
+    // closes the symlinked-subdir bypass (see utils.rs for the proof).
     if !crate::utils::is_path_within_upload_dir(&new_path, &config.upload_dir, false) {
+        tracing::warn!(
+            "rename: rejected new path outside upload dir: {:?} -> {:?}",
+            decoded_path,
+            new_path
+        );
         return (
             StatusCode::FORBIDDEN,
             Json(json!({ "error": "Invalid destination path" })),
+        )
+            .into_response();
+    }
+
+    // Also verify the current path is still where we think it is (TOCTOU):
+    // if an attacker swapped a symlink in between the earlier check and
+    // here, we'd be writing to the wrong location. The earlier
+    // `is_path_within_upload_dir(..., false)` check is a string check; this
+    // one is a strict `require_exists = true` check.
+    if !crate::utils::is_path_within_upload_dir(&current_path, &config.upload_dir, true) {
+        tracing::warn!(
+            "rename: source path failed re-validation: {:?}",
+            current_path
+        );
+        return (
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Invalid source path" })),
         )
             .into_response();
     }
