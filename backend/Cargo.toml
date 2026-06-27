@@ -12,7 +12,7 @@ readme = "../README.md"
 [dependencies]
 # Path-based for local development. Production builds use:
 #   shared-assets = { git = "https://github.com/UberMetroid/shared-assets", tag = "v3.0.0" }
-shared-assets = { path = "../frontend/Assets/shared-assets/shared-rust" }
+shared-assets = { path = "../frontend/Assets/shared-assets/shared-rust", version = "3.0.0" }
 tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "net", "fs", "time", "sync"] }
 tokio-util = { version = "0.7", features = ["io"] }
 axum = { version = "0.8", features = ["multipart"] }
