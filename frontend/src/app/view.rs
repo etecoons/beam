@@ -1,15 +1,12 @@
-pub mod explorer;
-pub mod pin_entry;
-pub mod uploader;
-
 use yew::prelude::*;
 
 use crate::app::App;
 use crate::types::Msg;
-
+use crate::components::header::Header;
+use crate::components::footer::Footer;
 
 impl App {
-    pub fn render_view(&self, ctx: &Context<Self>) -> Html {
+    pub fn view_app(&self, ctx: &Context<Self>) -> Html {
         let translations = crate::i18n::get_translations(self.language);
         let site_title = self
             .config
@@ -32,7 +29,7 @@ impl App {
 
         html! {
             <>
-                <crate::header::Header
+                <Header
                     site_title={site_title.to_string()}
                     theme={self.theme.clone()}
                     is_authenticated={self.is_authenticated}
@@ -126,7 +123,7 @@ impl App {
                 }}
 
             </div>
-            <crate::footer::Footer {show_version} {version} {show_github} {version_url}>
+            <Footer {show_version} {version} {show_github} {version_url}>
                 {
                     if let Some((msg, cls)) = &self.active_notification {
                         html! { <div class={format!("footer-status-text {}", cls)}>{ msg }</div> }
@@ -134,7 +131,7 @@ impl App {
                         html! { <div class="footer-status-text success">{"Ready"}</div> }
                     }
                 }
-            </crate::footer::Footer>
+            </Footer>
             </>
         }
     }

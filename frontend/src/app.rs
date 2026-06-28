@@ -123,7 +123,7 @@ impl Component for App {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        self.render_view(ctx)
+        self.view_app(ctx)
     }
 
     fn rendered(&mut self, _ctx: &Context<Self>, _first_render: bool) {
