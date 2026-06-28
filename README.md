@@ -101,17 +101,17 @@ Configure these settings inside your Docker Compose environment or container env
 | Variable | Description | Default |
 | :--- | :--- | :--- |
 | `PORT` | The port number the backend HTTP server will bind to inside the container. | `4401` |
-| `SITE_TITLE` | Custom website title rendered in navigation headers, browser tabs, and PWA manifest. *(Supports fallback `RUSTBEAM_TITLE`)* | `Beam` |
+| `SITE_TITLE` | Custom website title rendered in navigation headers, browser tabs, and PWA manifest. *(Supports fallbacks `BEAM_SITE_TITLE` or `BEAM_TITLE`)* | `Beam` |
 | `BASE_URL` | Application base URL. Essential when deploying behind reverse proxies to ensure redirect and websocket links are resolved correctly. | `http://localhost:4401/` |
 | `ALLOWED_ORIGINS` | Comma-separated list of allowed HTTP request origins (CORS filter). Use `*` to allow all origins. | `*` |
-| `BEAM_PIN` | Optional 4–10 digit PIN (numerical only) to lock access to the interface. Leave empty for public mode. | None |
+| `BEAM_PIN` | Optional 4–64 character PIN (any characters) to lock access to the interface. Leave empty for public mode. | None |
 | `TZ` | Timezone for the container processes and logs. | `UTC` |
 | `UPLOAD_DIR` | Main directory path where uploaded files are stored. | `/app/uploads` |
 | `MAX_FILE_SIZE` | Maximum file size limit in MB. | `1024` (1GB) |
 | `AUTO_UPLOAD` | Start uploading immediately upon dragging files. | `false` |
 | `SHOW_FILE_LIST` | Enable file explorer listing/deletion interface. | `false` |
 | `TRUST_PROXY` | Set `true` if backend is hosted behind a reverse proxy. | `false` |
-| `TRUSTED_PROXY_IPS` | Comma-separated IP list of trusted upstream proxies. | None |
+| `TRUSTED_PROXY_IPS` | Comma-separated IP/CIDR list of trusted upstream proxies. | None |
 | `MAX_STORAGE_LIMIT_GB` | Maximum capacity limit for upload directory in GB. | None |
 | `RETENTION_PERIOD_DAYS` | Automatically delete files older than this many days. | None |
 | `ALLOWED_EXTENSIONS` | Comma-separated list of allowed extensions (e.g. `.png,.pdf`). | None (All) |
@@ -119,6 +119,12 @@ Configure these settings inside your Docker Compose environment or container env
 | `ENABLE_THEMES` | Enable the Super Metroid theme selector in the navigation header (true/false). | `true` |
 | `ENABLE_PRINT` | Enable the print button in the navigation header (true/false). | `false` |
 | `MAX_ATTEMPTS` | Number of failed PIN attempts permitted before locking out the user client IP address. | `5` |
+| `LOCKOUT_TIME_MINUTES` | Lockout duration in minutes for IPs exceeding `MAX_ATTEMPTS`. | `15` |
+| `COOKIE_MAX_AGE_HOURS` | Duration in hours that the user's PIN session cookie remains valid. | `24` |
+| `SHUTDOWN_DRAIN_SECONDS` | Seconds to wait for active connections to finish before shutting down. | `5` |
+| `SHOW_VERSION` | Display the application version number in the footer (true/false). | `true` |
+| `SHOW_GITHUB` | Display the GitHub repository link in the footer (true/false). | `true` |
+| `CLIENT_MAX_RETRIES` | Number of connection retry attempts permitted for chunked file uploads. | `5` |
 
 
 
