@@ -16,6 +16,14 @@ pub async fn delete_file(
     _auth: RequirePin,
     Path(path): Path<String>,
 ) -> impl IntoResponse {
+    if !config.show_file_list {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "File deletion is disabled" })),
+        )
+            .into_response();
+    }
+
     let decoded_path = percent_encoding::percent_decode_str(&path)
         .decode_utf8_lossy()
         .to_string();

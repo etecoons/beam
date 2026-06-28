@@ -28,6 +28,14 @@ pub fn router() -> Router<crate::AppState> {
 }
 
 async fn list_files(State(config): State<Arc<AppConfig>>, _auth: RequirePin) -> impl IntoResponse {
+    if !config.show_file_list {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "File explorer listing is disabled" })),
+        )
+            .into_response();
+    }
+
     match get_directory_contents(&config.upload_dir, "") {
         Ok(items) => {
             let total_size = calculate_total_size(&items);
@@ -56,6 +64,14 @@ async fn file_info(
     _auth: RequirePin,
     Path(path): Path<String>,
 ) -> impl IntoResponse {
+    if !config.show_file_list {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "File explorer is disabled" })),
+        )
+            .into_response();
+    }
+
     let decoded_path = percent_encoding::percent_decode_str(&path)
         .decode_utf8_lossy()
         .to_string();

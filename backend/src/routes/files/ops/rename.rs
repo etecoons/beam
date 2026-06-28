@@ -25,6 +25,14 @@ pub async fn rename_file(
     Path(path): Path<String>,
     Json(payload): Json<RenamePayload>,
 ) -> impl IntoResponse {
+    if !config.show_file_list {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "File renaming is disabled" })),
+        )
+            .into_response();
+    }
+
     if payload.new_name.trim().is_empty() {
         return (
             StatusCode::BAD_REQUEST,
