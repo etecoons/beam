@@ -1,6 +1,6 @@
 [package]
 name = "backend"
-version = "3.0.1"
+version = "3.0.2"
 edition = "2024"
 authors = ["UberMetroid <admin@ubermetroid.com>"]
 license = "Apache-2.0"
