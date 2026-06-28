@@ -128,7 +128,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "shared-assets",
+ "shared-backend",
  "tokio",
  "tokio-util",
  "tower-http",
@@ -336,7 +336,7 @@ dependencies = [
  "js-sys",
  "serde",
  "serde_json",
- "shared-assets",
+ "shared-frontend",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -1338,7 +1338,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "shared-assets"
+name = "shared-backend"
 version = "3.0.0"
 dependencies = [
  "anyhow",
@@ -1349,10 +1349,27 @@ dependencies = [
  "ipnet",
  "serde",
  "serial_test",
+ "shared-core",
  "thiserror 2.0.18",
  "tokio",
  "tower-http",
  "tracing",
+]
+
+[[package]]
+name = "shared-core"
+version = "3.0.0"
+dependencies = [
+ "constant_time_eq",
+ "serde",
+]
+
+[[package]]
+name = "shared-frontend"
+version = "3.0.0"
+dependencies = [
+ "serde",
+ "shared-core",
  "web-sys",
  "yew",
 ]
