@@ -63,11 +63,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1782530211,
-        "narHash": "sha256-Zn5H2VVMaP79C+bvaUQD+SBXSKoTnURMZGiUrG00zII=",
+        "lastModified": 1782616745,
+        "narHash": "sha256-NN5B1cKBXF6h1Ec681gMGZ2o/99d7vKXAAfFNEvyOKA=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "06ba695dfefc4afc513b49dfc41c4bf0dd2eaeb1",
+        "rev": "b916d014dc57eb555f84e51172a82f7f6fb560d7",
         "type": "github"
       },
       "original": {
@@ -79,11 +79,11 @@
     "shared-assets": {
       "flake": false,
       "locked": {
-        "lastModified": 1782689660,
-        "narHash": "sha256-iCaZkoXfTu7Cw0E6ORaf3UHIPMwGJyxk+s66FuRCrSE=",
+        "lastModified": 1782693708,
+        "narHash": "sha256-ozJJ4XDZOA3BbTBrHhN3gi/2xRIuVnAq940QyNltMl8=",
         "owner": "UberMetroid",
         "repo": "shared-assets",
-        "rev": "b0036b5fb85ec9da8d648a128a67e52205920122",
+        "rev": "4c228fb928555086e30f1d5a176b568e602e3ec7",
         "type": "github"
       },
       "original": {
