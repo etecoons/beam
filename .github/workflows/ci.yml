@@ -92,6 +92,12 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
 
+      - name: Clone shared-assets and copy to Assets
+        run: |
+          git clone --depth 1 --branch v3.0.3 https://github.com/UberMetroid/shared-assets.git /tmp/shared-assets
+          mkdir -p frontend/Assets/shared-assets
+          cp -r /tmp/shared-assets/* frontend/Assets/shared-assets/
+
       - name: Build WASM Frontend
         run: |
           cd frontend
