@@ -124,4 +124,7 @@ pub enum Msg {
     // Toast alerts
     AddToast(String, String), // message, type
     RemoveToast(usize),
+
+    // Online/Offline status changed
+    OnlineStatusChanged(bool),
 }

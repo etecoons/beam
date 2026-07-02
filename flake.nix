@@ -6,7 +6,7 @@
     rust-overlay.url = "github:oxalica/rust-overlay";
     flake-utils.url = "github:numtide/flake-utils";
     shared-assets = {
-      url = "github:UberMetroid/shared-assets?ref=v3.0.2";
+      url = "github:UberMetroid/shared-assets?ref=v3.0.11";
       flake = false;
     };
   };
@@ -28,15 +28,15 @@
         # 1. Build the WASM frontend
         frontend = rustPlatform.buildRustPackage {
           pname = "beam-frontend";
-          version = "3.0.2";
+          version = "3.0.18";
           src = ./.;
 
           cargoLock = {
             lockFile = ./Cargo.lock;
             outputHashes = {
-              "shared-core-3.0.0" = "sha256-ozJJ4XDZOA3BbTBrHhN3gi/2xRIuVnAq940QyNltMl8=";
-              "shared-backend-3.0.0" = "sha256-ozJJ4XDZOA3BbTBrHhN3gi/2xRIuVnAq940QyNltMl8=";
-              "shared-frontend-3.0.0" = "sha256-ozJJ4XDZOA3BbTBrHhN3gi/2xRIuVnAq940QyNltMl8=";
+              "shared-core-3.0.11" = "sha256-QEEcfu06yKq4Hr3F+rpfGsnxA+WVZnAWpNR+6m0wORo=";
+              "shared-backend-3.0.11" = "sha256-QEEcfu06yKq4Hr3F+rpfGsnxA+WVZnAWpNR+6m0wORo=";
+              "shared-frontend-3.0.11" = "sha256-QEEcfu06yKq4Hr3F+rpfGsnxA+WVZnAWpNR+6m0wORo=";
             };
           };
 
@@ -63,15 +63,15 @@
         # 2. Build the Axum backend
         backend = rustPlatform.buildRustPackage {
           pname = "beam-backend";
-          version = "3.0.2";
+          version = "3.0.18";
           src = ./.;
 
           cargoLock = {
             lockFile = ./Cargo.lock;
             outputHashes = {
-              "shared-core-3.0.0" = "sha256-ozJJ4XDZOA3BbTBrHhN3gi/2xRIuVnAq940QyNltMl8=";
-              "shared-backend-3.0.0" = "sha256-ozJJ4XDZOA3BbTBrHhN3gi/2xRIuVnAq940QyNltMl8=";
-              "shared-frontend-3.0.0" = "sha256-ozJJ4XDZOA3BbTBrHhN3gi/2xRIuVnAq940QyNltMl8=";
+              "shared-core-3.0.11" = "sha256-QEEcfu06yKq4Hr3F+rpfGsnxA+WVZnAWpNR+6m0wORo=";
+              "shared-backend-3.0.11" = "sha256-QEEcfu06yKq4Hr3F+rpfGsnxA+WVZnAWpNR+6m0wORo=";
+              "shared-frontend-3.0.11" = "sha256-QEEcfu06yKq4Hr3F+rpfGsnxA+WVZnAWpNR+6m0wORo=";
             };
           };
 

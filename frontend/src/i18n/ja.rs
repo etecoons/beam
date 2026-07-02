@@ -46,5 +46,8 @@ pub fn get_translations() -> Translations {
         download_link_copied: "ダウンロードリンクをコピーしました！",
         failed_copy_link: "リンクのコピーに失敗しました",
         authentication_success: "認証に成功しました",
+        online_restored: "ネットワーク接続が復旧しました。",
+        online_lost: "ネットワーク接続が切れました。アップロードを一時停止します。",
+        file_too_large_prefix: "制限サイズを超えるファイルを除外しました: ",
     }
 }

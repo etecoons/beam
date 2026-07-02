@@ -19,13 +19,8 @@ impl App {
             .map(|c| c.pin_required)
             .unwrap_or(false);
 
-        let show_version = self.config.as_ref().map(|c| c.show_version).unwrap_or(true);
         let show_github = self.config.as_ref().map(|c| c.show_github).unwrap_or(true);
         let version = env!("CARGO_PKG_VERSION").to_string();
-        let version_url = format!(
-            "https://github.com/UberMetroid/beam/releases/tag/v{}",
-            version
-        );
 
         let enable_print = self
             .config
@@ -46,12 +41,16 @@ impl App {
                     on_logout={ctx.link().callback(|_| Msg::Logout)}
                     on_language_change={ctx.link().callback(Msg::SwitchLanguage)}
                     logout_tooltip={translations.log_out.to_string()}
-                    print_disabled={self.uploaded_files.as_ref().map(|f| f.items.is_empty()).unwrap_or(true)
-                        || !enable_print}
-                    on_print={None}
+                    print_disabled={!enable_print}
+                    on_print={Some(Callback::from(|_| {
+                        if let Some(w) = web_sys::window() {
+                            let _ = w.print();
+                        }
+                    }))}
                     enable_translation={self.config.as_ref().map(|c| c.enable_translation).unwrap_or(false)}
                     enable_themes={self.config.as_ref().map(|c| c.enable_themes).unwrap_or(true)}
                     enable_print={enable_print}
+                    version={Some(version.clone())}
                 />
                 <div class="container">
                     {if !self.is_authenticated {
@@ -131,7 +130,7 @@ impl App {
                 }}
 
             </div>
-            <Footer {show_version} {version} {show_github} {version_url}>
+            <Footer {version} {show_github}>
                 {
                     if let Some((msg, cls)) = &self.active_notification {
                         html! { <div class={format!("footer-status-text {}", cls)}>{ msg }</div> }

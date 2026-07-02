@@ -1,0 +1,19 @@
+[package]
+name = "shared-core"
+version = "3.0.10"
+edition = "2024"
+description = "Core platform-agnostic types and primitives for UberMetroid shared assets."
+license = "Apache-2.0"
+repository = "https://github.com/UberMetroid/shared-assets"
+homepage = "https://github.com/UberMetroid/shared-assets"
+documentation = "https://github.com/UberMetroid/shared-assets"
+readme = "../../README.md"
+keywords = ["yew", "wasm", "axum", "i18n", "themes"]
+categories = ["web-programming", "internationalization", "api-bindings"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+constant_time_eq = "0.3"
+
+[dev-dependencies]
+serde_json = "1.0"

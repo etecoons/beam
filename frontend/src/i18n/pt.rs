@@ -46,5 +46,8 @@ pub fn get_translations() -> Translations {
         download_link_copied: "Link de download copiado!",
         failed_copy_link: "Falha ao copiar link",
         authentication_success: "Autenticação bem-sucedida",
+        online_restored: "Conexão de rede restaurada.",
+        online_lost: "Conexão de rede perdida. Envios pausados.",
+        file_too_large_prefix: "Arquivo(s) ignorado(s) excedendo o limite de tamanho: ",
     }
 }

@@ -1,0 +1,31 @@
+[package]
+name = "shared-backend"
+version = "3.0.10"
+edition = "2024"
+description = "Server-side and backend shared assets for UberMetroid companion apps."
+license = "Apache-2.0"
+repository = "https://github.com/UberMetroid/shared-assets"
+homepage = "https://github.com/UberMetroid/shared-assets"
+documentation = "https://github.com/UberMetroid/shared-assets"
+readme = "../../README.md"
+keywords = ["axum", "server", "middleware", "authentication", "cors"]
+categories = ["web-programming::http-server", "authentication", "api-bindings"]
+
+[dependencies]
+shared-core = { path = "../shared-core" }
+axum = "0.8"
+ipnet = "2.9"
+thiserror = "2.0"
+anyhow = "1.0"
+dotenvy = "0.15"
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+http-body-util = "0.1"
+tokio = { version = "1", features = ["signal", "net", "macros"] }
+tracing = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+constant_time_eq = "0.3"
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread", "time"] }
+serial_test = "3"

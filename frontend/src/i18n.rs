@@ -58,6 +58,9 @@ pub struct Translations {
     pub download_link_copied: &'static str,
     pub failed_copy_link: &'static str,
     pub authentication_success: &'static str,
+    pub online_restored: &'static str,
+    pub online_lost: &'static str,
+    pub file_too_large_prefix: &'static str,
 }
 
 pub fn get_translations(lang: Language) -> Translations {

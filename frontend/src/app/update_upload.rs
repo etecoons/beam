@@ -18,7 +18,7 @@ impl App {
             }
 
             Msg::FilesSelected(files) => {
-                self.upload_queue = files;
+                self.upload_queue = self.validate_and_filter_files(ctx, files);
                 self.active_uploads.clear();
 
                 if let Some(ref config) = self.config
@@ -30,7 +30,7 @@ impl App {
             }
 
             Msg::FoldersSelected(files) => {
-                self.upload_queue = files;
+                self.upload_queue = self.validate_and_filter_files(ctx, files);
                 self.active_uploads.clear();
 
                 if let Some(ref config) = self.config
@@ -44,7 +44,7 @@ impl App {
             Msg::DropProcessed(res) => {
                 match res {
                     Ok(new_files) => {
-                        self.upload_queue = new_files;
+                        self.upload_queue = self.validate_and_filter_files(ctx, new_files);
                         self.active_uploads.clear();
 
                         if let Some(ref config) = self.config
@@ -194,5 +194,35 @@ impl App {
             }
             _ => false,
         }
+    }
+
+    fn validate_and_filter_files(&mut self, ctx: &Context<Self>, files: Vec<web_sys::File>) -> Vec<web_sys::File> {
+        let max_size = self.config.as_ref().map(|c| c.max_file_size).unwrap_or(20 * 1024 * 1024 * 1024);
+        let mut valid_files = Vec::new();
+        let mut too_large_files = Vec::new();
+        for file in files {
+            if file.size() as u64 > max_size {
+                too_large_files.push(file.name());
+            } else {
+                valid_files.push(file);
+            }
+        }
+        if !too_large_files.is_empty() {
+            let limit_str = if max_size >= 1024 * 1024 * 1024 {
+                format!("{} GB", max_size / (1024 * 1024 * 1024))
+            } else {
+                format!("{} MB", max_size / (1024 * 1024))
+            };
+            let translations = crate::i18n::get_translations(self.language);
+            let msg = format!(
+                "{} {} (max {}): {}",
+                translations.file_too_large_prefix,
+                too_large_files.len(),
+                limit_str,
+                too_large_files.join(", ")
+            );
+            self.show_toast(ctx, &msg, "error");
+        }
+        valid_files
     }
 }

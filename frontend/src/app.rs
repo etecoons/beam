@@ -119,6 +119,16 @@ impl Component for App {
             | Msg::RenameInputChanged(_)
             | Msg::RenameResult(_) => self.update_files(ctx, msg),
             Msg::AddToast(_, _) | Msg::RemoveToast(_) => self.update_toast(ctx, msg),
+            Msg::OnlineStatusChanged(online) => {
+                let translations = crate::i18n::get_translations(self.language);
+                if online {
+                    self.show_toast(ctx, translations.online_restored, "success");
+                    ctx.link().send_message(Msg::RefreshFiles);
+                } else {
+                    self.show_toast(ctx, translations.online_lost, "error");
+                }
+                true
+            }
         }
     }
 
@@ -126,7 +136,30 @@ impl Component for App {
         self.view_app(ctx)
     }
 
-    fn rendered(&mut self, _ctx: &Context<Self>, _first_render: bool) {
+    fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {
+        if first_render {
+            use wasm_bindgen::JsCast;
+            let window = web_sys::window().unwrap();
+            
+            let link_online = ctx.link().clone();
+            let on_online = wasm_bindgen::prelude::Closure::<dyn FnMut(_)>::new(move |_: web_sys::Event| {
+                link_online.send_message(Msg::OnlineStatusChanged(true));
+            });
+            window
+                .add_event_listener_with_callback("online", on_online.as_ref().unchecked_ref())
+                .unwrap();
+            on_online.forget();
+
+            let link_offline = ctx.link().clone();
+            let on_offline = wasm_bindgen::prelude::Closure::<dyn FnMut(_)>::new(move |_: web_sys::Event| {
+                link_offline.send_message(Msg::OnlineStatusChanged(false));
+            });
+            window
+                .add_event_listener_with_callback("offline", on_offline.as_ref().unchecked_ref())
+                .unwrap();
+            on_offline.forget();
+        }
+
         if !self.is_authenticated
             && !self.is_lockout
             && let Some(input) = self.pin_ref.cast::<web_sys::HtmlInputElement>()

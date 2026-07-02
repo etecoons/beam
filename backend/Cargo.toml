@@ -1,6 +1,6 @@
 [package]
 name = "backend"
-version = "3.0.15"
+version = "3.0.18"
 edition = "2024"
 authors = ["UberMetroid"]
 license = "Apache-2.0"
@@ -10,8 +10,8 @@ description = "Axum backend service for Beam."
 readme = "../README.md"
 
 [dependencies]
-shared-core = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.3" }
-shared-backend = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.3" }
+shared-core = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.11" }
+shared-backend = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.11" }
 tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "net", "fs", "time", "sync"] }
 tokio-util = { version = "0.7", features = ["io"] }
 axum = { version = "0.8", features = ["multipart"] }

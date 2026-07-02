@@ -46,5 +46,8 @@ pub fn get_translations() -> Translations {
         download_link_copied: "下载链接已复制！",
         failed_copy_link: "复制链接失败",
         authentication_success: "验证成功",
+        online_restored: "网络连接已恢复。",
+        online_lost: "网络连接断开。上传已暂停。",
+        file_too_large_prefix: "已跳过超出大小限制的文件：",
     }
 }

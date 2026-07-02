@@ -46,5 +46,8 @@ pub fn get_translations() -> Translations {
         download_link_copied: "Ссылка для скачивания скопирована!",
         failed_copy_link: "Не удалось скопировать ссылку",
         authentication_success: "Успешная авторизация",
+        online_restored: "Сетевое подключение восстановлено.",
+        online_lost: "Сетевое подключение потеряно. Загрузки приостановлены.",
+        file_too_large_prefix: "Пропущены файлы, превышающие лимит размера: ",
     }
 }

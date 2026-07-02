@@ -1,0 +1,21 @@
+# Clippy configuration for the UberMetroid companion apps.
+# Schema validated against clippy 0.1.96.
+
+# Allow expect/unwrap in tests.
+allow-expect-in-tests = true
+allow-unwrap-in-tests = true
+
+# Cognitive complexity threshold (functions above this trigger complexity warning).
+cognitive-complexity-threshold = 30
+
+# Maximum size for a single function (lines).
+too-many-lines-threshold = 150
+
+# Maximum number of arguments.
+too-many-arguments-threshold = 8
+
+# Maximum type complexity.
+type-complexity-threshold = 250
+
+# MSRV (minimum supported Rust version) — must match Dockerfile base.
+msrv = "1.96"
