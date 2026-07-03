@@ -1,9 +1,10 @@
-use crate::storage::StorageService;
+use shared_frontend::storage::StorageService;
 use shared_frontend::theme::{Theme, mapping::Scheme};
 use wasm_bindgen::JsValue;
 
 pub fn get_saved_theme() -> String {
-    let raw = StorageService::get_item("theme", Theme::default().name());
+    let raw = StorageService::new().get_item("theme");
+    let raw = if raw.is_empty() { Theme::default().name().to_string() } else { raw };
     let theme = if let Some(scheme) = Scheme::from_id(&raw) {
         scheme.to_theme().name().to_string()
     } else {
@@ -19,7 +20,7 @@ pub fn get_saved_theme() -> String {
 }
 
 pub fn save_theme(theme: &str) {
-    StorageService::set_item("theme", theme);
+    StorageService::new().set_item("theme", theme);
 }
 
 pub fn set_theme_attribute(theme: &str) {

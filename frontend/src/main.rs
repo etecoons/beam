@@ -17,7 +17,6 @@ mod app;
 mod components;
 mod i18n;
 mod js_api;
-mod storage;
 mod types;
 mod utils;
 

@@ -10,8 +10,8 @@ description = "Axum backend service for Beam."
 readme = "../README.md"
 
 [dependencies]
-shared-core = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.17" }
-shared-backend = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.17" }
+shared-core = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.18" }
+shared-backend = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.18" }
 tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "net", "fs", "time", "sync"] }
 tokio-util = { version = "0.7", features = ["io"] }
 axum = { version = "0.8", features = ["multipart"] }
@@ -20,7 +20,6 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 dotenvy = "0.15"
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 axum-extra = { version = "0.12", features = ["cookie"] }
 rand = "0.8"
 chrono = { version = "0.4", default-features = false, features = ["std", "serde", "clock"] }

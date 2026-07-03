@@ -10,7 +10,6 @@ mod utils;
 use axum::{Extension, Router, routing::get};
 use std::path::Path;
 use std::sync::Arc;
-use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::config::AppConfig;
 use crate::middleware::static_files::{serve_health, serve_index, serve_login};
@@ -27,7 +26,9 @@ use shared_backend::middleware::{cors_layer, security_headers_layer};
 /// Server entry point.
 #[tokio::main]
 async fn main() {
-    init_tracing();
+    shared_backend::tracing_init::init_tracing(
+        shared_backend::tracing_init::default_log_dir().as_deref(),
+    );
     let config = Arc::new(AppConfig::load());
     let upload_state = Arc::new(UploadState::new());
     let app_state = AppState {
@@ -44,53 +45,6 @@ async fn main() {
 
     let app = build_router(config.clone(), app_state);
     run_server(config.server.port, app).await;
-}
-
-/// Install the global tracing subscriber (stdout + optional file logging).
-fn init_tracing() {
-    let log_dir = std::env::var("LOG_DIR").ok().or_else(|| {
-        if Path::new("/app/data").is_dir() {
-            Some("/app/data/log".to_string())
-        } else {
-            Some("/app/log".to_string())
-        }
-    });
-
-    let (file_err, file_app) = match log_dir.as_deref() {
-        Some(d) if !matches!(d, "off" | "none" | "false") => {
-            let _ = std::fs::create_dir_all(d);
-            let open = |name: &str| {
-                std::fs::OpenOptions::new()
-                    .create(true)
-                    .append(true)
-                    .open(Path::new(d).join(name))
-                    .ok()
-            };
-            let err = open("error.log").map(|f| {
-                tracing_subscriber::fmt::layer()
-                    .with_writer(std::sync::Mutex::new(f))
-                    .with_ansi(false)
-                    .with_filter(tracing_subscriber::filter::LevelFilter::WARN)
-            });
-            let app = open("app.log").map(|f| {
-                tracing_subscriber::fmt::layer()
-                    .with_writer(std::sync::Mutex::new(f))
-                    .with_ansi(false)
-                    .with_filter(tracing_subscriber::filter::LevelFilter::INFO)
-            });
-            (err, app)
-        }
-        _ => (None, None),
-    };
-
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .with(file_err)
-        .with(file_app)
-        .init();
 }
 
 /// Ensure upload dir + metadata subdir exist.

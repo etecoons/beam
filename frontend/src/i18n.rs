@@ -76,45 +76,22 @@ pub fn get_translations(lang: Language) -> Translations {
     }
 }
 
-use crate::storage::StorageService;
+use shared_frontend::locale::{detect_browser_locale, set_saved_locale};
 
 pub fn get_saved_language() -> Language {
-    let stored = StorageService::get_item("lang", "");
-    if !stored.is_empty() {
-        match stored.as_str() {
-            "zh" => Language::Chinese,
-            "es" => Language::Spanish,
-            "de" => Language::German,
-            "ja" => Language::Japanese,
-            "fr" => Language::French,
-            "pt" => Language::Portuguese,
-            "ru" => Language::Russian,
-            _ => Language::English,
-        }
-    } else {
-        let window = web_sys::window().unwrap();
-        if let Some(nav) = window.navigator().language() {
-            let nav = nav.to_lowercase();
-            if nav.starts_with("zh") {
-                return Language::Chinese;
-            } else if nav.starts_with("es") {
-                return Language::Spanish;
-            } else if nav.starts_with("de") {
-                return Language::German;
-            } else if nav.starts_with("ja") {
-                return Language::Japanese;
-            } else if nav.starts_with("fr") {
-                return Language::French;
-            } else if nav.starts_with("pt") {
-                return Language::Portuguese;
-            } else if nav.starts_with("ru") {
-                return Language::Russian;
-            }
-        }
-        Language::English
+    let code = detect_browser_locale();
+    match code.as_str() {
+        "zh" => Language::Chinese,
+        "es" => Language::Spanish,
+        "de" => Language::German,
+        "ja" => Language::Japanese,
+        "fr" => Language::French,
+        "pt" => Language::Portuguese,
+        "ru" => Language::Russian,
+        _ => Language::English,
     }
 }
 
 pub fn save_language(lang: Language) {
-    StorageService::set_item("lang", lang.code());
+    set_saved_locale(lang.code());
 }
