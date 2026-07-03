@@ -6,7 +6,7 @@
     rust-overlay.url = "github:oxalica/rust-overlay";
     flake-utils.url = "github:numtide/flake-utils";
     shared-assets = {
-      url = "git+file:///home/jeryd/Projects/ubermetroid/shared-assets?ref=v3.0.17";
+      url = "git+file:///home/jeryd/Projects/ubermetroid/shared-assets?ref=v3.0.18";
       flake = false;
     };
   };
@@ -28,7 +28,7 @@
         # 1. Build the WASM frontend
         frontend = rustPlatform.buildRustPackage {
           pname = "beam-frontend";
-          version = "3.0.20";
+          version = "3.0.21";
           src = ./.;
 
           cargoLock = {
@@ -63,7 +63,7 @@
         # 2. Build the Axum backend
         backend = rustPlatform.buildRustPackage {
           pname = "beam-backend";
-          version = "3.0.20";
+          version = "3.0.21";
           src = ./.;
 
           cargoLock = {
