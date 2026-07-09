@@ -8,12 +8,14 @@ use std::path::Path as StdPath;
 use std::sync::Arc;
 
 use crate::config::AppConfig;
+use crate::routes::auth::RequirePin;
 use crate::routes::upload::UploadState;
 use crate::routes::upload::metadata::read_upload_metadata;
 
 pub async fn cancel_upload(
     State(config): State<Arc<AppConfig>>,
     State(state): State<Arc<UploadState>>,
+    _auth: RequirePin,
     Path(upload_id): Path<String>,
 ) -> impl IntoResponse {
     tracing::info!("Received cancel request for upload: {}", upload_id);
