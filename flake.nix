@@ -6,7 +6,7 @@
     rust-overlay.url = "github:oxalica/rust-overlay";
     flake-utils.url = "github:numtide/flake-utils";
     shared-assets = {
-      url = "git+file:///home/jeryd/Projects/ubermetroid/shared-assets?ref=v3.0.18";
+      url = "github:UberMetroid/shared-assets?ref=v3.0.19";
       flake = false;
     };
   };
@@ -33,11 +33,7 @@
 
           cargoLock = {
             lockFile = ./Cargo.lock;
-            outputHashes = {
-              "shared-core-3.0.18" = "sha256-sjkQrpXtrCQKWk1hQeTw1GHvcpl+tthWKkEWuyZOXSA=";
-              "shared-backend-3.0.18" = "sha256-sjkQrpXtrCQKWk1hQeTw1GHvcpl+tthWKkEWuyZOXSA=";
-              "shared-frontend-3.0.18" = "sha256-sjkQrpXtrCQKWk1hQeTw1GHvcpl+tthWKkEWuyZOXSA=";
-            };
+            allowBuiltinFetchGit = true;
           };
 
           nativeBuildInputs = [
@@ -68,11 +64,7 @@
 
           cargoLock = {
             lockFile = ./Cargo.lock;
-            outputHashes = {
-              "shared-core-3.0.18" = "sha256-sjkQrpXtrCQKWk1hQeTw1GHvcpl+tthWKkEWuyZOXSA=";
-              "shared-backend-3.0.18" = "sha256-sjkQrpXtrCQKWk1hQeTw1GHvcpl+tthWKkEWuyZOXSA=";
-              "shared-frontend-3.0.18" = "sha256-sjkQrpXtrCQKWk1hQeTw1GHvcpl+tthWKkEWuyZOXSA=";
-            };
+            allowBuiltinFetchGit = true;
           };
 
           nativeBuildInputs = [ pkgs.pkg-config ];
