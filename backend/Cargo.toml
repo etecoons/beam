@@ -1,6 +1,6 @@
 [package]
 name = "backend"
-version = "3.0.27"
+version = "3.0.28"
 edition = "2024"
 authors = ["etecoons"]
 license = "Apache-2.0"
