@@ -141,7 +141,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "shared-backend",
- "shared-core",
+ "shared-core 3.0.29",
  "tokio",
  "tokio-util",
  "tower-http",
@@ -360,7 +360,7 @@ dependencies = [
  "js-sys",
  "serde",
  "serde_json",
- "shared-core",
+ "shared-core 3.0.29",
  "shared-frontend",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -1341,7 +1341,7 @@ dependencies = [
  "ipnet",
  "rusqlite",
  "serde",
- "shared-core",
+ "shared-core 3.0.28",
  "thiserror 2.0.18",
  "tokio",
  "tower-http",
@@ -1359,13 +1359,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "shared-core"
+version = "3.0.29"
+source = "git+https://github.com/etecoons/shared-assets.git?tag=v3.0.29#cad2021cf1809e6ac00dce80beab5f241272fc69"
+dependencies = [
+ "constant_time_eq",
+ "serde",
+]
+
+[[package]]
 name = "shared-frontend"
 version = "3.0.28"
 source = "git+https://github.com/etecoons/shared-assets.git?tag=v3.0.28#afb616ffb4b9d43a1bd4ae119dfaa339c648049d"
 dependencies = [
  "js-sys",
  "serde",
- "shared-core",
+ "shared-core 3.0.28",
  "wasm-bindgen",
  "web-sys",
  "yew",
