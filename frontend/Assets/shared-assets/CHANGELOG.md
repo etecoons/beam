@@ -63,9 +63,9 @@ shared_backend::security::print_unauthorized_console_message();
 shared-assets = { path = "...", features = ["frontend"] }
 
 # After (3.x): three crates, pinned to tag v3.0.0:
-shared-core    = { git = "https://github.com/etecoons/shared-assets.git", tag = "v3.0.28" }
-shared-backend = { git = "https://github.com/etecoons/shared-assets.git", tag = "v3.0.28" }
-shared-frontend = { git = "https://github.com/etecoons/shared-assets.git", tag = "v3.0.28" }
+shared-core    = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.29" }
+shared-backend = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.29" }
+shared-frontend = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.29" }
 
 # Or for local development:
 shared-core    = { path = "Assets/shared-assets/shared-rust/shared-core" }

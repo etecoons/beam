@@ -190,9 +190,9 @@ returning a `VerifyPinResponse`).
 For the git-dep form (recommended for tagged releases):
 
 ```toml
-shared-core    = { git = "https://github.com/etecoons/shared-assets.git", tag = "v3.0.28" }
-shared-backend = { git = "https://github.com/etecoons/shared-assets.git", tag = "v3.0.28" }
-shared-frontend = { git = "https://github.com/etecoons/shared-assets.git", tag = "v3.0.28" }
+shared-core    = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.29" }
+shared-backend = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.29" }
+shared-frontend = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.29" }
 ```
 
 ---
