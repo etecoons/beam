@@ -1,6 +1,6 @@
 [package]
 name = "backend"
-version = "3.0.31"
+version = "3.0.32"
 edition = "2024"
 authors = ["etecoons"]
 license = "Apache-2.0"
@@ -15,7 +15,7 @@ shared-backend = { git = "https://github.com/UberMetroid/shared-assets.git", tag
 tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "net", "fs", "time", "sync"] }
 tokio-util = { version = "0.7", features = ["io"] }
 axum = { version = "0.8", features = ["multipart"] }
-tower-http = { version = "0.6", features = ["fs", "limit"] }
+tower-http = { version = "0.7.0", features = ["fs", "limit", "trace"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 dotenvy = "0.15"
