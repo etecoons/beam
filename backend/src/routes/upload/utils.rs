@@ -3,13 +3,11 @@ use serde_json::json;
 use std::path::{Path as StdPath, PathBuf};
 
 pub fn generate_batch_id() -> String {
+    use rand::distr::{Alphanumeric, SampleString};
     let now = chrono::Utc::now().timestamp_millis();
-    let rand_str: String =
-        rand::Rng::sample_iter(rand::thread_rng(), &rand::distributions::Alphanumeric)
-            .take(9)
-            .map(char::from)
-            .collect::<String>()
-            .to_lowercase();
+    let rand_str = Alphanumeric
+        .sample_string(&mut rand::rng(), 9)
+        .to_lowercase();
     format!("{}-{}", now, rand_str)
 }
 
