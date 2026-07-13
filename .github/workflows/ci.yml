@@ -22,8 +22,14 @@ jobs:
       - name: Check Format
         run: cargo fmt --all -- --check
 
+      - name: Install cargo-binstall
+        run: curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+
+      - name: Install cargo-deny
+        run: cargo binstall -y cargo-deny
+
       - name: Cargo Deny Check
-        uses: embarkstudios/cargo-deny-action@v2
+        run: cargo deny check
 
       - name: Install Trunk
         run: wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.21.3/trunk-x86_64-unknown-linux-gnu.tar.gz | sudo tar -xzf- -C /usr/local/bin
