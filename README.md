@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/etecoons">
-    <img src="assets/header.jpg" alt="etecoons banner" width="100%">
+    <img src="frontend/Assets/header.jpg" alt="etecoons banner" width="100%">
   </a>
 </p>
 

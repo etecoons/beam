@@ -1,6 +1,6 @@
 [package]
 name = "frontend"
-version = "3.0.36"
+version = "3.0.37"
 edition = "2024"
 authors = ["etecoons"]
 license = "Apache-2.0"
