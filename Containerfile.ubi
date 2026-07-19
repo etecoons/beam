@@ -121,6 +121,7 @@ ENV PORT=4401 \
     RUST_LOG=info \
     UPLOAD_DIR=/config
 
+
 EXPOSE 4401
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
