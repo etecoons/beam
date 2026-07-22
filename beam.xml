@@ -13,7 +13,7 @@
   <Category>Tools: MediaServer:Other Network:Web Storage:</Category>
   <WebUI>http://[IP]:[PORT:4401]/</WebUI>
   <TemplateURL/>
-  <Icon>https://raw.githubusercontent.com/studio2201/beam/main/assets/beam-mascot.jpg</Icon>
+  <Icon>https://raw.githubusercontent.com/studio2201/beam/master/assets/beam-mascot.jpg</Icon>
   <ExtraParams/>
   <PostArgs/>
   <CPUset/>
