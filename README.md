@@ -1,11 +1,5 @@
-<p align="center">
-  <a href="https://github.com/studio2201/beam">
-    <img src="assets/beam-header.jpg" alt="studio2201 banner" width="100%">
-  </a>
-</p>
-
 <h1 align="center">
-  <img src="assets/beam-icon.png" width="48" height="48" valign="middle"> Beam
+  <img src="https://raw.githubusercontent.com/studio2201/.github/master/profile/assets/beam.png" width="48" height="48" valign="middle"> Beam
 </h1>
 
 <p align="center">
@@ -97,3 +91,11 @@ CLI Command Reference:
 ### License
 
 Distributed under the Apache 2.0 License. See [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  <a href="https://github.com/studio2201/beam">
+    <img src="assets/beam-header.jpg" alt="studio2201 banner" width="100%">
+  </a>
+</p>
