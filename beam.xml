@@ -10,7 +10,7 @@
   <Support>https://github.com/studio2201/beam/issues</Support>
   <Project>https://github.com/studio2201/beam</Project>
   <Overview>High-performance, secure self-hosted file sharing web application built in Rust.</Overview>
-  <Category>Tools: MediaServer:Other Network:Web Storage:</Category>
+  <Category>Network:Web Tools:Utilities Cloud:Storage</Category>
   <WebUI>http://[IP]:[PORT:4401]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/studio2201/unraid-templates/main/templates/beam.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/studio2201/unraid-templates/main/icons/beam.png</Icon>
