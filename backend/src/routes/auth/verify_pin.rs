@@ -90,23 +90,18 @@ pub async fn verify_pin(
     // 4. Compare PIN.
     if safe_compare(pin_str, config_pin) {
         reset_attempts(&ip);
-        let is_secure = shared_backend::cookie_auth::cookie_should_be_secure(
+        let is_secure = crate::cookie_auth::cookie_should_be_secure(
             &headers,
             &config.server.base_url,
         );
 
-        let session_id = shared_backend::session_id::generate_session_id();
+        let session_id = crate::session_id::generate_session_id();
         state
             .active_sessions
             .write()
             .await
             .insert(session_id.clone());
-        let cookie = Cookie::build(("BEAM_PIN", session_id))
-            .http_only(true)
-            .secure(is_secure)
-            .same_site(SameSite::Lax)
-            .path("/")
-            .build();
+        let cookie = crate::cookie_auth::build_cookie(&session_id, config.server.cookie_max_age_hours, is_secure);
         let new_jar = jar.add(cookie);
         tracing::info!("Successful PIN verification from IP: {}", ip);
         (

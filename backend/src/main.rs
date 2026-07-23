@@ -1,3 +1,6 @@
+mod cookie_auth;
+mod session_id;
+
 mod config;
 pub mod middleware;
 mod routes;
