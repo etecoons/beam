@@ -1,101 +1,188 @@
-//! Beam-specific configuration layered on top of shared [`ServerConfig`].
+//! Beam application configuration (flat struct).
 //!
-//! Beam-specific fields (upload dir, file size limits, retention) live here.
-//! Common fields (port, pin, enable_*, etc.) come from [`ServerConfig`].
+//! Per-app copy of the prior `crate::config::AppConfig`
+//! wrapper. The 16 fields that the shared `ServerConfig` had are
+//! inlined here as direct fields of [`AppConfig`], and the env-parsing
+//! logic is duplicated per app so each app tunes its own defaults
+//! without a one-size-fits-all shared abstraction.
 
+use ipnet::IpNet;
 use std::env;
-use std::path::PathBuf;
+use std::str::FromStr;
 
-use shared_backend::server::ServerConfig;
+const DEFAULT_PORT: u16 = 4401;
 
-/// Beam application configuration. Wraps [`ServerConfig`] with upload and
-/// retention settings that are specific to the file-sharing use case.
+/// Beam application configuration.
 #[derive(Clone, Debug)]
 pub struct AppConfig {
-    pub server: ServerConfig,
-    pub upload_dir: PathBuf,
+    pub port: u16,
+    pub site_title: String,
+    pub base_url: String,
+    pub allowed_origins: String,
+    pub pin: Option<String>,
+    pub enable_translation: bool,
+    pub enable_themes: bool,
+    pub enable_print: bool,
+    pub show_version: bool,
+    pub show_github: bool,
+    pub trust_proxy: bool,
+    pub trusted_proxies: Vec<IpNet>,
+    pub max_attempts: u32,
+    pub lockout_time_minutes: u64,
+    pub cookie_max_age_hours: i64,
+    pub shutdown_drain_seconds: u64,
+    pub upload_dir: std::path::PathBuf,
     pub max_file_size: u64,
     pub auto_upload: bool,
     pub show_file_list: bool,
-    pub trust_proxy: bool,
+    pub trust_proxy_local: bool,
     pub trusted_proxy_ips: Option<Vec<String>>,
     pub allowed_extensions: Option<Vec<String>>,
     pub client_max_retries: u32,
     pub max_storage_limit: Option<u64>,
     pub retention_period_days: Option<u64>,
     pub node_env: String,
+
 }
 
 impl AppConfig {
-    /// Build a config by combining shared [`ServerConfig::from_env`] with
-    /// beam-specific env parsing.
+    /// Canonical brand name surfaced as the default PWA / site title
+    /// fallback.
+    pub const APP_BRAND: &str = "Beam";
+
+    /// Build a config by reading common env vars.
     pub fn load() -> Self {
-        let server = ServerConfig::from_env("BEAM");
-
-        let upload_dir = if let Ok(dir) = env::var("UPLOAD_DIR")
-            && !dir.is_empty()
+        #[cfg(not(test))]
         {
-            PathBuf::from(dir)
-        } else {
-            env::var("LOCAL_UPLOAD_DIR")
-                .map(PathBuf::from)
-                .unwrap_or_else(|_| PathBuf::from("./local_uploads"))
-        };
+            let _ = dotenvy::from_path("/app/data/.env");
+            let _ = dotenvy::dotenv();
+        }
 
-        let max_file_size = parse_or("MAX_FILE_SIZE", 1024u64) * 1024 * 1024;
+        let port = parse_or("PORT", DEFAULT_PORT);
+        let site_title = first_nonempty_env(&[
+            "Beam_SITE_TITLE",
+            "Beam_TITLE",
+            "SITE_TITLE",
+        ])
+        .unwrap_or_else(|| Self::APP_BRAND.to_string());
+        let base_url =
+            env::var("BASE_URL").unwrap_or_else(|_| format!("http://localhost:{port}"));
+        let allowed_origins = env::var("ALLOWED_ORIGINS").unwrap_or_default();
+        let pin = first_nonempty_env(&["Beam_PIN", "PIN"]).and_then(|p| {
+            let len = p.chars().count();
+            if (4..=64).contains(&len) {
+                Some(p)
+            } else {
+                None
+            }
+        });
+        let trust_proxy = parse_bool_env("TRUST_PROXY");
+        let trusted_proxies = parse_trusted_proxies("TRUSTED_PROXY_IPS");
 
         Self {
-            server,
-            upload_dir,
-            max_file_size,
-            auto_upload: parse_bool("AUTO_UPLOAD"),
-            show_file_list: env::var("SHOW_FILE_LIST")
-                .map(|v| v != "false" && v != "off")
-                .unwrap_or(true),
-            trust_proxy: parse_bool("TRUST_PROXY"),
-            trusted_proxy_ips: env::var("TRUSTED_PROXY_IPS").ok().map(|ips| {
-                ips.split(',')
-                    .map(|ip| ip.trim().to_string())
-                    .filter(|ip| !ip.is_empty())
-                    .collect()
-            }),
-            allowed_extensions: env::var("ALLOWED_EXTENSIONS")
-                .ok()
-                .filter(|s| !s.is_empty())
-                .map(|exts| {
-                    exts.split(',')
-                        .map(|ext| {
-                            let mut trimmed = ext.trim().to_lowercase();
-                            if !trimmed.starts_with('.') {
-                                trimmed.insert(0, '.');
-                            }
-                            trimmed
-                        })
-                        .collect()
-                }),
-            client_max_retries: parse_or("CLIENT_MAX_RETRIES", 5u32),
-            max_storage_limit: env::var("MAX_STORAGE_LIMIT_GB")
-                .ok()
-                .and_then(|s| s.parse::<u64>().ok())
-                .map(|gb| gb * 1024 * 1024 * 1024),
-            retention_period_days: env::var("RETENTION_PERIOD_DAYS")
-                .ok()
-                .and_then(|s| s.parse().ok()),
-            node_env: env::var("NODE_ENV").unwrap_or_else(|_| "production".to_string()),
+            port,
+            site_title,
+            base_url,
+            allowed_origins,
+            pin,
+            enable_translation: parse_bool_env("ENABLE_TRANSLATION"),
+            enable_themes: parse_optout_bool_env("ENABLE_THEMES", true),
+            enable_print: parse_optout_bool_env("ENABLE_PRINT", true),
+            show_version: parse_optout_bool_env("SHOW_VERSION", true),
+            show_github: parse_optout_bool_env("SHOW_GITHUB", true),
+            trust_proxy,
+            trusted_proxies,
+            max_attempts: parse_or("MAX_ATTEMPTS", 5u32),
+            lockout_time_minutes: parse_or("LOCKOUT_TIME_MINUTES", 15u64),
+            cookie_max_age_hours: parse_or("COOKIE_MAX_AGE_HOURS", 24i64),
+            shutdown_drain_seconds: parse_or("SHUTDOWN_DRAIN_SECONDS", 5u64),
+
         }
     }
-}
 
-fn parse_bool(name: &str) -> bool {
-    env::var(name).map(|v| v == "true").unwrap_or(false)
+    /// Returns `true` if PIN-based authentication is enabled.
+    #[must_use]
+    pub fn pin_enabled(&self) -> bool {
+        self.pin.is_some()
+    }
+
+    /// Returns the lockout duration as a `std::time::Duration`.
+    #[must_use]
+    pub fn lockout_duration(&self) -> std::time::Duration {
+        std::time::Duration::from_secs(self.lockout_time_minutes * 60)
+    }
 }
 
 fn parse_or<T>(name: &str, default: T) -> T
 where
-    T: std::str::FromStr,
+    T: FromStr,
 {
+    match env::var(name) {
+        Ok(v) => match v.parse() {
+            Ok(parsed) => parsed,
+            Err(_) => {
+                tracing::warn!(
+                    target: "config",
+                    "{name}={v:?} is not a valid value; using default",
+                );
+                default
+            }
+        },
+        Err(_) => default,
+    }
+}
+
+fn parse_bool_env(name: &str) -> bool {
+    env::var(name)
+        .map(|v| v == "true" || v == "on")
+        .unwrap_or(false)
+}
+
+fn parse_optout_bool_env(name: &str, default: bool) -> bool {
+    env::var(name)
+        .map(|v| v != "false" && v != "off")
+        .unwrap_or(default)
+}
+
+fn first_nonempty_env(names: &[&str]) -> Option<String> {
+    for name in names {
+        if let Ok(v) = env::var(name)
+            && !v.is_empty()
+        {
+            return Some(v);
+        }
+    }
+    None
+}
+
+fn parse_trusted_proxies(name: &str) -> Vec<IpNet> {
     env::var(name)
         .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(default)
+        .map(|s| {
+            s.split(',')
+                .map(|s| s.trim())
+                .filter(|s| !s.is_empty())
+                .filter_map(|s| IpNet::from_str(s).ok())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn load_does_not_panic() {
+        let cfg = AppConfig::load();
+        assert!(!cfg.site_title.is_empty());
+    }
+
+    #[test]
+    fn lockout_duration_scales_with_minutes() {
+        let cfg = AppConfig::load();
+        let expected =
+            std::time::Duration::from_secs(cfg.lockout_time_minutes * 60);
+        assert_eq!(cfg.lockout_duration(), expected);
+    }
 }

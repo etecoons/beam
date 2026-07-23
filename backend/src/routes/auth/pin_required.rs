@@ -23,28 +23,28 @@ pub struct FrontendConfig {
 
 pub async fn get_config(State(config): State<Arc<AppConfig>>) -> Json<FrontendConfig> {
     Json(FrontendConfig {
-        site_title: config.server.site_title.clone(),
+        site_title: config.site_title.clone(),
         auto_upload: config.auto_upload,
         show_file_list: config.show_file_list,
-        pin_required: config.server.pin.is_some(),
-        pin_length: config.server.pin.as_ref().map(|p| p.len()).unwrap_or(0),
+        pin_required: config.pin.is_some(),
+        pin_length: config.pin.as_ref().map(|p| p.len()).unwrap_or(0),
         max_file_size: config.max_file_size,
         client_max_retries: config.client_max_retries,
-        enable_translation: config.server.enable_translation,
-        enable_themes: config.server.enable_themes,
-        enable_print: config.server.enable_print,
-        show_version: config.server.show_version,
-        show_github: config.server.show_github,
+        enable_translation: config.enable_translation,
+        enable_themes: config.enable_themes,
+        enable_print: config.enable_print,
+        show_version: config.show_version,
+        show_github: config.show_github,
     })
 }
 
 pub async fn pin_required(State(config): State<Arc<AppConfig>>) -> Json<serde_json::Value> {
-    let length = config.server.pin.as_ref().map(|p| p.len()).unwrap_or(0);
+    let length = config.pin.as_ref().map(|p| p.len()).unwrap_or(0);
     Json(json!({
-        "required": config.server.pin.is_some(),
+        "required": config.pin.is_some(),
         "length": length,
-        "enable_translation": config.server.enable_translation,
-        "enable_themes": config.server.enable_themes,
-        "enable_print": config.server.enable_print,
+        "enable_translation": config.enable_translation,
+        "enable_themes": config.enable_themes,
+        "enable_print": config.enable_print,
     }))
 }

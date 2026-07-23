@@ -7,12 +7,12 @@
 //!
 //! - `shared_backend::auth::{is_locked_out, record_attempt, reset_attempts,
 //!   lockout_remaining_secs}` — process-global per-IP lockout
-//! - `shared_backend::server::get_client_ip` — X-Forwarded-For with
+//! - `crate::ip::get_client_ip` — X-Forwarded-For with
 //!   trusted-proxy allowlist (no unsafe default when the allowlist is
 //!   empty)
-//! - `shared_backend::middleware::security_headers_layer` — replaces the
+//! - `crate::middleware::security_headers_layer` — replaces the
 //!   `security_headers_middleware` axum function previously defined here
-//! - `shared_backend::middleware::hsts_layer` — replaces the
+//! - `crate::middleware::hsts_layer` — replaces the
 //!   `hsts_middleware` axum function previously defined here
 //!
 //! This file exists as a thin adapter so existing call sites

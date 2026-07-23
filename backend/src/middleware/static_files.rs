@@ -35,14 +35,14 @@ pub async fn serve_html(config: Arc<AppConfig>, req_path: &str) -> Response {
         Err(_) => return StatusCode::NOT_FOUND.into_response(),
     };
 
-    let base_url_with_slash = if config.server.base_url.ends_with('/') {
-        config.server.base_url.clone()
+    let base_url_with_slash = if config.base_url.ends_with('/') {
+        config.base_url.clone()
     } else {
-        format!("{}/", config.server.base_url)
+        format!("{}/", config.base_url)
     };
 
     let mut rendered = content
-        .replace("{{SITE_TITLE}}", &config.server.site_title)
+        .replace("{{SITE_TITLE}}", &config.site_title)
         .replace("{{BASE_URL}}", &base_url_with_slash);
 
     if req_path == "index.html" {

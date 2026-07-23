@@ -32,7 +32,7 @@ pub async fn verify_pin(
     );
 
     // 1. No PIN configured: clear cookie, success.
-    let Some(config_pin) = config.server.pin.as_deref() else {
+    let Some(config_pin) = config.pin.as_deref() else {
         let new_jar = jar.add(Cookie::build(("BEAM_PIN", "")).path("/").build());
         return (
             new_jar,
@@ -92,7 +92,7 @@ pub async fn verify_pin(
         reset_attempts(&ip);
         let is_secure = crate::cookie_auth::cookie_should_be_secure(
             &headers,
-            &config.server.base_url,
+            &config.base_url,
         );
 
         let session_id = crate::session_id::generate_session_id();
@@ -101,7 +101,7 @@ pub async fn verify_pin(
             .write()
             .await
             .insert(session_id.clone());
-        let cookie = crate::cookie_auth::build_cookie(&session_id, config.server.cookie_max_age_hours, is_secure);
+        let cookie = crate::cookie_auth::build_cookie(&session_id, config.cookie_max_age_hours, is_secure);
         let new_jar = jar.add(cookie);
         tracing::info!("Successful PIN verification from IP: {}", ip);
         (

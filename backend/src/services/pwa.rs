@@ -19,8 +19,8 @@ pub fn generate_pwa_manifest(config: &AppConfig) {
     }
 
     let pwa_manifest = serde_json::json!({
-        "name": &config.server.site_title,
-        "short_name": &config.server.site_title,
+        "name": &config.site_title,
+        "short_name": &config.site_title,
         "description": "A simple file upload application",
         "start_url": "/",
         "display": "standalone",

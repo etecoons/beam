@@ -1,4 +1,5 @@
 
+mod ip;
 mod config;
 pub mod middleware;
 mod routes;
@@ -48,7 +49,7 @@ async fn main() {
     generate_pwa_manifest(&config);
 
     let app = build_router(config.clone(), app_state);
-    if let Err(e) = run_server(config.server.port, app).await {
+    if let Err(e) = run_server(config.port, app).await {
         tracing::error!("Server error: {e}");
     }
 }
@@ -81,7 +82,7 @@ fn build_router(config: Arc<AppConfig>, app_state: AppState) -> Router {
     // The shared-assets middleware needs a `&ServerConfig` / `Arc<ServerConfig>`.
     // Extract it from the app config so the rest of the file can keep using
     // `Arc<AppConfig>`.
-    let server_config: Arc<shared_backend::server::ServerConfig> = Arc::new(config.server.clone());
+    let server_config: Arc<crate::config::AppConfig> = Arc::new(config.clone());
 
     let api_routes = Router::new()
         .nest("/auth", crate::routes::auth::router())

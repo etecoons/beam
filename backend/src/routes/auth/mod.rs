@@ -29,7 +29,7 @@ where
         let app_state = crate::AppState::from_ref(state);
         let config = &app_state.config;
 
-        if let Some(ref pin) = config.server.pin {
+        if let Some(ref pin) = config.pin {
             let jar = CookieJar::from_headers(&parts.headers);
             let cookie_pin = jar.get("BEAM_PIN").map(|c| c.value());
             let header_pin = parts.headers.get("x-pin").and_then(|h| h.to_str().ok());
