@@ -1,5 +1,3 @@
-mod cookie_auth;
-mod session_id;
 
 mod config;
 pub mod middleware;
@@ -26,6 +24,9 @@ use shared_backend::middleware::hsts::{HstsState, hsts_layer};
 use shared_backend::middleware::title::{TitleState, title_injection_layer};
 
 use shared_backend::middleware::{cors_layer, security_headers_layer};
+mod cookie_auth;
+mod session_id;
+
 /// Server entry point.
 #[tokio::main]
 async fn main() {
